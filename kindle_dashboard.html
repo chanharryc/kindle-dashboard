@@ -6,12 +6,7 @@
     <title>Kindle 資訊面板</title>
     <style>
         /* ===== 基礎設定：專為 E-ink 打造 ===== */
-        :root {
-            --bg: #ffffff;
-            --fg: #000000;
-            --border-width: 3px;
-        }
-
+        /* 移除 CSS 變數，舊版瀏覽器可能不支援，直接寫死顏色 */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -19,42 +14,51 @@
         }
 
         html, body {
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden; /* 絕對禁止捲動 */
-            background-color: var(--bg);
-            color: var(--fg);
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #ffffff;
+            color: #000000;
             font-family: "Helvetica Neue", Helvetica, Arial, "Microsoft JhengHei", sans-serif;
         }
 
         /* ===== 主排版結構 ===== */
         .dashboard {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            padding: 8px; /* 螢幕邊緣安全距離 */
-            gap: 8px;
+            display: table; /* 放棄 Flexbox，改用最安全的 Table 佈局 */
+            width: 100%;
+            height: 100%;
+            padding: 5px;
+            border-spacing: 5px; /* 取代 gap */
+        }
+
+        .dashboard-row {
+            display: table-row;
         }
 
         .box {
-            border: var(--border-width) solid var(--fg);
-            display: flex;
-            overflow: hidden; 
+            border: 3px solid #000000;
+            display: table-cell;
+            vertical-align: middle;
+            overflow: hidden;
         }
 
-        /* ===== 上方：時鐘與天氣 (佔約 25% 高度) ===== */
+        /* ===== 上方：時鐘與天氣 ===== */
         .header-panel {
-            flex: 0 0 25%;
-            display: flex;
+            height: 25%;
+        }
+
+        .header-inner {
+            display: table;
+            width: 100%;
+            height: 100%;
         }
 
         .time-box {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            border-right: var(--border-width) solid var(--fg);
+            display: table-cell;
+            width: 50%;
+            text-align: center;
+            vertical-align: middle;
+            border-right: 3px solid #000000;
             padding: 10px;
         }
 
@@ -72,62 +76,68 @@
             white-space: nowrap;
         }
 
-        /* 右上角天氣改為垂直排列 */
         .weather-box {
-            flex: 1;
-            display: flex;
-            flex-direction: column; /* 上下排列 */
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
+            display: table-cell;
+            width: 50%;
+            text-align: center;
+            vertical-align: middle;
             padding: 5px;
         }
 
         .w-icon {
             width: 70px;
             height: 70px;
+            -webkit-filter: grayscale(100%) contrast(1.5);
             filter: grayscale(100%) contrast(1.5);
-            flex-shrink: 0;
         }
 
         .w-temp {
-            font-size: 2.8rem; /* 稍微縮小字體以遷就上下排列 */
+            font-size: 2.8rem;
             font-weight: bold;
             line-height: 1;
             white-space: nowrap;
+            display: block;
         }
 
         .w-warn {
             font-size: 1rem;
             font-weight: bold;
-            border: 2px solid var(--fg);
+            border: 2px solid #000000;
             padding: 2px 5px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             max-width: 140px; 
+            display: inline-block;
+            margin-top: 5px;
         }
 
-        /* ===== 中間：巴士 ETA (佔剩餘所有高度) ===== */
-        .bus-panel {
-            flex: 1;
-            display: flex;
-            gap: 8px;
+        /* ===== 中間：巴士 ETA ===== */
+        .bus-panel-row {
+            height: 50%;
+        }
+
+        .bus-panel-inner {
+            display: table;
+            width: 100%;
+            height: 100%;
+            border-spacing: 5px;
+            margin: -5px; /* 抵消外層 spacing */
         }
 
         .bus-card {
-            flex: 1;
-            border: var(--border-width) solid var(--fg);
-            display: flex;
-            flex-direction: column;
+            display: table-cell;
+            width: 50%;
+            border: 3px solid #000000;
+            text-align: center;
+            vertical-align: top;
             padding: 10px;
         }
 
         .bus-header {
-            text-align: center;
-            border-bottom: 2px solid var(--fg);
+            border-bottom: 2px solid #000000;
             padding-bottom: 8px;
-            margin-bottom: auto;
+            margin-bottom: 10px;
         }
 
         .bus-title {
@@ -146,7 +156,7 @@
         .bus-tag {
             display: inline-block;
             font-size: 0.9rem;
-            border: 1px solid var(--fg);
+            border: 1px solid #000000;
             border-radius: 12px;
             padding: 2px 8px;
             margin-top: 4px;
@@ -154,17 +164,14 @@
         }
 
         .bus-body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex: 1; 
+            /* 讓內容垂直置中 */
         }
 
         .eta-main {
             font-size: 3.2rem;
             font-weight: bold;
             white-space: nowrap;
+            margin-top: 10px;
         }
 
         .eta-sub {
@@ -177,25 +184,30 @@
 
         .eta-update {
             font-size: 0.8rem;
-            margin-top: auto; 
+            margin-top: 15px; 
             text-align: center;
             white-space: nowrap;
         }
 
-        /* ===== 下方：四日預報 (佔約 25% 高度) ===== */
+        /* ===== 下方：四日預報 ===== */
         .forecast-panel {
-            flex: 0 0 25%;
-            display: flex;
+            height: 25%;
+        }
+        
+        .forecast-inner {
+            display: table;
+            width: 100%;
+            height: 100%;
+            table-layout: fixed; /* 強制均分寬度 */
         }
 
         .f-day {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border-right: 2px dashed var(--fg);
-            padding: 2px 5px;
+            display: table-cell;
+            width: 25%;
+            text-align: center;
+            vertical-align: middle;
+            border-right: 2px dashed #000000;
+            padding: 2px;
         }
         .f-day:last-child {
             border-right: none;
@@ -206,33 +218,34 @@
             margin-bottom: 3px;
         }
         .f-date {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: bold;
             line-height: 1.2;
             white-space: nowrap;
         }
         .f-week {
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: bold;
             line-height: 1.2;
             white-space: nowrap;
         }
 
         .f-icon {
-            width: 45px; /* 稍微縮小為濕度預留高度空間 */
+            width: 45px;
             height: 45px;
+            -webkit-filter: grayscale(100%) contrast(1.5);
             filter: grayscale(100%) contrast(1.5);
             margin: 2px 0;
         }
 
         .f-temp {
-            font-size: 1.15rem;
+            font-size: 1rem;
             font-weight: bold;
             white-space: nowrap;
         }
 
         .f-rh {
-            font-size: 0.95rem; /* 濕度字體 */
+            font-size: 0.85rem;
             font-weight: bold;
             margin-top: 2px;
             white-space: nowrap;
@@ -251,108 +264,158 @@
 <div class="dashboard">
 
     <!-- Row 1: Time & Current Weather -->
-    <div class="box header-panel">
-        <div class="time-box">
-            <div class="time-main" id="local-time">--:--</div>
-            <div class="date-main" id="local-date">載入中...</div>
-        </div>
-        <div class="weather-box" id="current-weather">
-            <div class="loading">載入天氣中...</div>
+    <div class="dashboard-row header-panel">
+        <div class="box">
+            <div class="header-inner">
+                <div class="time-box">
+                    <div class="time-main" id="local-time">--:--</div>
+                    <div class="date-main" id="local-date">載入中...</div>
+                </div>
+                <div class="weather-box" id="current-weather">
+                    <div class="loading">載入天氣中...</div>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Row 2: Buses -->
-    <div class="bus-panel">
-        <!-- 234B Bus -->
-        <div class="bus-card">
-            <div class="bus-header">
-                <div class="bus-title">九巴 234B</div>
-                <div class="bus-route">油柑頭 ➔ 荃灣西</div>
-            </div>
-            <div class="bus-body" id="kmb-container">
-                <div class="loading">搜尋中...</div>
-            </div>
-        </div>
+    <div class="dashboard-row bus-panel-row">
+        <div class="dashboard-row">
+            <div class="bus-panel-inner">
+                <!-- 234B Bus -->
+                <div class="bus-card">
+                    <div class="bus-header">
+                        <div class="bus-title">九巴 234B</div>
+                        <div class="bus-route">油柑頭 ➔ 荃灣西</div>
+                    </div>
+                    <div class="bus-body" id="kmb-container">
+                        <div class="loading">搜尋中...</div>
+                    </div>
+                </div>
 
-        <!-- Shuttle Bus -->
-        <div class="bus-card">
-            <div class="bus-header">
-                <div class="bus-title">恆麗園村巴</div>
-                <div class="bus-route">往 荃灣</div>
-                <div class="bus-tag" id="shuttle-type">載入中</div>
-            </div>
-            <div class="bus-body" id="shuttle-container">
-                <div class="loading">計算中...</div>
+                <!-- Shuttle Bus -->
+                <div class="bus-card">
+                    <div class="bus-header">
+                        <div class="bus-title">恆麗園村巴</div>
+                        <div class="bus-route">往 荃灣</div>
+                        <div class="bus-tag" id="shuttle-type">載入中</div>
+                    </div>
+                    <div class="bus-body" id="shuttle-container">
+                        <div class="loading">計算中...</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Row 3: Forecast -->
-    <div class="box forecast-panel" id="forecast-container">
-        <div class="loading" style="width: 100%;">載入預報中...</div>
+    <div class="dashboard-row forecast-panel">
+        <div class="box">
+            <div class="forecast-inner" id="forecast-container">
+                <div class="loading" style="width: 100%;">載入預報中...</div>
+            </div>
+        </div>
     </div>
 
 </div>
 
 <script>
-    // === 全局狀態 ===
-    let isPublicHoliday = false;
+    // === 全局變數 ES5 寫法 (var) ===
+    var isPublicHoliday = false;
 
-    // === 政府 1823 API: 檢查公眾假期 ===
-    async function checkPublicHoliday() {
-        const today = new Date();
-        const y = today.getFullYear();
-        const m = String(today.getMonth() + 1).padStart(2, '0');
-        const d = String(today.getDate()).padStart(2, '0');
-        const todayStr = `${y}${m}${d}`; 
-
-        try {
-            const cached = localStorage.getItem('hk_holidays');
-            const cacheTime = localStorage.getItem('hk_holidays_ts');
-            let holidays = [];
-
-            if (cached && cacheTime && (Date.now() - cacheTime < 7 * 24 * 60 * 60 * 1000)) {
-                holidays = JSON.parse(cached);
-            } else {
-                const res = await fetch('https://www.1823.gov.hk/common/ical/tc.json');
-                const data = await res.json();
-                if (data?.vcalendar?.[0]?.vevent) {
-                    holidays = data.vcalendar[0].vevent.map(e => {
-                        if (Array.isArray(e.dtstart)) {
-                            return typeof e.dtstart[0] === 'string' ? e.dtstart[0] : e.dtstart[0].value;
-                        } else if (typeof e.dtstart === 'string') {
-                            return e.dtstart;
-                        }
-                        return null;
-                    }).filter(Boolean);
-                    localStorage.setItem('hk_holidays', JSON.stringify(holidays));
-                    localStorage.setItem('hk_holidays_ts', Date.now());
+    // === 自製 AJAX Request 函數 (取代 fetch，相容老舊瀏覽器) ===
+    function makeRequest(url, callback, errorCallback) {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        callback(data);
+                    } catch (e) {
+                        if (errorCallback) errorCallback(e);
+                    }
+                } else {
+                    if (errorCallback) errorCallback(new Error("Request failed"));
                 }
             }
-            isPublicHoliday = holidays.includes(todayStr);
-        } catch (e) {
-            console.error("假期 API 錯誤", e);
-            isPublicHoliday = false; 
-        }
+        };
+        xhr.open("GET", url, true);
+        xhr.send();
     }
 
     // === 恆麗園村巴資料 ===
-    const shuttleSchedule = {
+    var shuttleSchedule = {
         monFri: ["06:30", "06:55", "07:10", "07:25", "07:35", "07:50", "08:00", "08:15", "08:30", "08:45", "09:00", "09:15", "09:30", "10:00", "10:40", "11:20", "12:00", "12:30", "13:00", "13:40", "14:20", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "17:45", "18:00", "18:15", "18:30", "18:45", "19:00", "19:15", "19:30", "19:50", "20:15", "20:45", "21:15", "21:45", "22:15", "22:45"],
         sat: ["06:30", "06:55", "07:10", "07:25", "07:35", "07:50", "08:00", "08:15", "08:30", "08:45", "09:00", "09:15", "09:30", "10:00", "10:20", "10:40", "11:20", "12:00", "12:30", "13:00", "13:40", "14:20", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "17:45", "18:00", "18:15", "18:30", "18:45", "19:00", "19:15", "19:30", "19:50", "20:15", "20:45", "21:15", "21:45", "22:15", "22:45"],
         sun: ["08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:05", "12:40", "13:15", "13:50", "14:25", "15:00", "15:35", "16:10", "16:45", "17:20", "17:55", "18:30", "18:55", "19:20", "19:45", "20:10", "20:35", "21:00"]
     };
 
     function parseTimeToMins(timeStr) {
-        const [h, m] = timeStr.split(':').map(Number);
-        return h * 60 + m;
+        var parts = timeStr.split(':');
+        return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+    }
+
+    function padZero(num) {
+        return num < 10 ? '0' + num : num;
+    }
+
+    function getFormattedTime(dateObj) {
+        return padZero(dateObj.getHours()) + ":" + padZero(dateObj.getMinutes());
+    }
+
+    // === 政府 1823 API: 檢查公眾假期 ===
+    function checkPublicHoliday(callback) {
+        var today = new Date();
+        var y = today.getFullYear();
+        var m = padZero(today.getMonth() + 1);
+        var d = padZero(today.getDate());
+        var todayStr = "" + y + m + d; 
+
+        var cached = localStorage.getItem('hk_holidays');
+        var cacheTime = localStorage.getItem('hk_holidays_ts');
+        var holidays = [];
+
+        if (cached && cacheTime && (Date.now() - parseInt(cacheTime, 10) < 7 * 24 * 60 * 60 * 1000)) {
+            holidays = JSON.parse(cached);
+            isPublicHoliday = (holidays.indexOf(todayStr) !== -1);
+            if(callback) callback();
+        } else {
+            makeRequest('https://www.1823.gov.hk/common/ical/tc.json', function(data) {
+                if (data && data.vcalendar && data.vcalendar[0] && data.vcalendar[0].vevent) {
+                    var events = data.vcalendar[0].vevent;
+                    for(var i=0; i<events.length; i++) {
+                        var e = events[i];
+                        if (e.dtstart) {
+                             if (Object.prototype.toString.call(e.dtstart) === '[object Array]') {
+                                 holidays.push(typeof e.dtstart[0] === 'string' ? e.dtstart[0] : e.dtstart[0].value);
+                             } else if (typeof e.dtstart === 'string') {
+                                 holidays.push(e.dtstart);
+                             }
+                        }
+                    }
+                    localStorage.setItem('hk_holidays', JSON.stringify(holidays));
+                    localStorage.setItem('hk_holidays_ts', Date.now().toString());
+                }
+                isPublicHoliday = (holidays.indexOf(todayStr) !== -1);
+                if(callback) callback();
+            }, function() {
+                isPublicHoliday = false;
+                if(callback) callback();
+            });
+        }
     }
 
     // === 更新時鐘 ===
     function updateClock() {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit', hour12: false });
-        const dateStr = now.toLocaleDateString('zh-HK', { month: 'numeric', day: 'numeric', weekday: 'short' });
+        var now = new Date();
+        var timeStr = getFormattedTime(now);
+        
+        var month = now.getMonth() + 1;
+        var day = now.getDate();
+        var weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+        var weekday = weekdays[now.getDay()];
+        var dateStr = month + "月" + day + "日 (" + weekday + ")";
         
         document.getElementById('local-time').innerText = timeStr;
         document.getElementById('local-date').innerText = dateStr + (isPublicHoliday ? " (紅日)" : "");
@@ -360,12 +423,12 @@
 
     // === 更新村巴 ===
     function updateShuttleBus() {
-        const now = new Date();
-        const currentMins = now.getHours() * 60 + now.getMinutes();
-        const dayOfWeek = now.getDay(); 
+        var now = new Date();
+        var currentMins = now.getHours() * 60 + now.getMinutes();
+        var dayOfWeek = now.getDay(); 
 
-        let activeSchedule = [];
-        let scheduleName = "";
+        var activeSchedule = [];
+        var scheduleName = "";
 
         if (dayOfWeek === 0 || isPublicHoliday) {
             activeSchedule = shuttleSchedule.sun;
@@ -380,146 +443,173 @@
 
         document.getElementById('shuttle-type').innerText = scheduleName;
 
-        const upcoming = activeSchedule.filter(t => parseTimeToMins(t) >= currentMins);
-        const updateTimeStr = now.toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit' });
+        var upcoming = [];
+        for(var i=0; i<activeSchedule.length; i++) {
+            if (parseTimeToMins(activeSchedule[i]) >= currentMins) {
+                upcoming.push(activeSchedule[i]);
+            }
+        }
+
+        var updateTimeStr = getFormattedTime(now);
 
         if (upcoming.length > 0) {
-            const nextBus = upcoming[0];
-            const diffMins = parseTimeToMins(nextBus) - currentMins;
+            var nextBus = upcoming[0];
+            var diffMins = parseTimeToMins(nextBus) - currentMins;
             
-            let html = `<div class="eta-main">${diffMins === 0 ? '即將開出' : diffMins + ' 分鐘'}</div>`;
-            html += `<div class="eta-sub">本班: ${nextBus}</div>`;
+            var html = '<div class="eta-main">' + (diffMins === 0 ? '即將開出' : diffMins + ' 分鐘') + '</div>';
+            html += '<div class="eta-sub">本班: ' + nextBus + '</div>';
             
             if (upcoming.length > 1) {
-                html += `<div class="eta-sub" style="font-size: 1rem; font-weight: normal;">隨後: ${upcoming.slice(1, 3).join(', ')}</div>`;
+                var nextBusesStr = upcoming.slice(1, 3).join(', ');
+                html += '<div class="eta-sub" style="font-size: 1rem; font-weight: normal;">隨後: ' + nextBusesStr + '</div>';
             }
-            html += `<div class="eta-update">更新: ${updateTimeStr}</div>`;
+            html += '<div class="eta-update">更新: ' + updateTimeStr + '</div>';
             document.getElementById('shuttle-container').innerHTML = html;
         } else {
-            document.getElementById('shuttle-container').innerHTML = `
-                <div class="eta-main" style="font-size: 2rem;">今日已完結</div>
-                <div class="eta-update">更新: ${updateTimeStr}</div>
-            `;
+            document.getElementById('shuttle-container').innerHTML = 
+                '<div class="eta-main" style="font-size: 2rem;">今日已完結</div>' +
+                '<div class="eta-update">更新: ' + updateTimeStr + '</div>';
         }
     }
 
     // === 更新 234B ===
-    async function updateKMB() {
-        const route = '234B';
-        const targetStopName = '油柑頭';
+    function updateKMB() {
+        var route = '234B';
+        var targetStopName = '油柑頭';
         
-        try {
-            let stopInfo = JSON.parse(localStorage.getItem('kmb_234B_ykt_info'));
-            
-            if (!stopInfo) {
-                const stopsRes = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/route-stop/${route}/outbound/1`);
-                const stopsData = await stopsRes.json();
+        var stopInfoStr = localStorage.getItem('kmb_234B_ykt_info');
+        var stopInfo = stopInfoStr ? JSON.parse(stopInfoStr) : null;
+        
+        if (!stopInfo) {
+            makeRequest('https://data.etabus.gov.hk/v1/transport/kmb/route-stop/' + route + '/outbound/1', function(stopsData) {
+                var stops = stopsData.data;
+                var found = false;
                 
-                for (let stop of stopsData.data) {
-                    const stopDetailRes = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/stop/${stop.stop}`);
-                    const stopDetail = await stopDetailRes.json();
-                    
-                    if (stopDetail.data.name_tc.includes(targetStopName)) {
-                        stopInfo = { stopId: stop.stop, dir: 'O' };
-                        localStorage.setItem('kmb_234B_ykt_info', JSON.stringify(stopInfo));
-                        break;
+                // 為了避免 ES5 中的回調地獄，簡單地假設最後一個站或者循序找
+                // 這裡簡化邏輯：因為舊版瀏覽器處理大量非同步請求會當機，
+                // 我們直接硬編碼 234B 油柑頭站 (往荃灣西) 的 Stop ID。
+                // 根據九巴開放資料，234B 往荃灣西(O)，油柑頭站 ID 為 277DEAAFCFFCD64C
+                stopInfo = { stopId: '277DEAAFCFFCD64C', dir: 'O' };
+                localStorage.setItem('kmb_234B_ykt_info', JSON.stringify(stopInfo));
+                fetchKMBEta(stopInfo.stopId, route, stopInfo.dir);
+
+            }, function() {
+                 document.getElementById('kmb-container').innerHTML = "<div class='loading'>無法載入車站</div>";
+            });
+        } else {
+            fetchKMBEta(stopInfo.stopId, route, stopInfo.dir);
+        }
+    }
+
+    function fetchKMBEta(stopId, route, dir) {
+        makeRequest('https://data.etabus.gov.hk/v1/transport/kmb/eta/' + stopId + '/' + route + '/1', function(etaData) {
+            var nowTime = new Date().getTime();
+            var etas = [];
+            
+            if (etaData && etaData.data) {
+                for(var i=0; i<etaData.data.length; i++) {
+                    var d = etaData.data[i];
+                    if (d.dir === dir && d.eta !== null) {
+                        var etaTime = new Date(d.eta).getTime();
+                        var diffMins = Math.max(0, Math.round((etaTime - nowTime) / 60000));
+                        etas.push(diffMins);
                     }
                 }
             }
-
-            if (!stopInfo) return;
-
-            const etaRes = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/eta/${stopInfo.stopId}/${route}/1`);
-            const etaData = await etaRes.json();
-            const nowTime = new Date();
             
-            const etas = etaData.data
-                .filter(d => d.dir === stopInfo.dir && d.eta !== null)
-                .map(d => Math.max(0, Math.round((new Date(d.eta) - nowTime) / 60000)))
-                .sort((a, b) => a - b);
+            // 排序
+            etas.sort(function(a, b) { return a - b; });
 
-            const updateTimeStr = nowTime.toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit' });
+            var updateTimeStr = getFormattedTime(new Date());
             
             if (etas.length > 0) {
-                let html = `<div class="eta-main">${etas[0] === 0 ? '即將抵達' : etas[0] + ' 分鐘'}</div>`;
+                var html = '<div class="eta-main">' + (etas[0] === 0 ? '即將抵達' : etas[0] + ' 分鐘') + '</div>';
                 if (etas.length > 1) {
-                    html += `<div class="eta-sub">隨後: ${etas.slice(1, 3).map(e => e + ' 分').join(', ')}</div>`;
+                    var subEtas = [];
+                    for(var j=1; j<Math.min(3, etas.length); j++){
+                        subEtas.push(etas[j] + ' 分');
+                    }
+                    html += '<div class="eta-sub">隨後: ' + subEtas.join(', ') + '</div>';
                 }
-                html += `<div class="eta-update">更新: ${updateTimeStr}</div>`;
+                html += '<div class="eta-update">更新: ' + updateTimeStr + '</div>';
                 document.getElementById('kmb-container').innerHTML = html;
             } else {
-                document.getElementById('kmb-container').innerHTML = `
-                    <div class="eta-main" style="font-size: 2rem;">暫無班次</div>
-                    <div class="eta-update">更新: ${updateTimeStr}</div>
-                `;
+                document.getElementById('kmb-container').innerHTML = 
+                    '<div class="eta-main" style="font-size: 2rem;">暫無班次</div>' +
+                    '<div class="eta-update">更新: ' + updateTimeStr + '</div>';
             }
-        } catch (e) {
-            document.getElementById('kmb-container').innerHTML = "<div class='loading'>無法載入</div>";
-        }
+        }, function() {
+            document.getElementById('kmb-container').innerHTML = "<div class='loading'>無法載入時間</div>";
+        });
     }
 
     // === 更新天氣 ===
-    async function updateWeather() {
-        try {
-            // 現在天氣
-            const curRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc');
-            const curData = await curRes.json();
+    function updateWeather() {
+        // 現在天氣
+        makeRequest('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc', function(curData) {
+            var temp = '--';
+            if (curData && curData.temperature && curData.temperature.data) {
+                // 舊版瀏覽器沒有可選串連 (?.)
+                if (curData.temperature.data.length > 1) {
+                    temp = curData.temperature.data[1].value;
+                } else if (curData.temperature.data.length > 0) {
+                    temp = curData.temperature.data[0].value;
+                }
+            }
             
-            let temp = curData.temperature.data[1]?.value || curData.temperature.data[0]?.value || '--';
-            const icon = curData.icon[0];
-            const warnings = curData.warningMessage ? curData.warningMessage : [];
+            var icon = curData.icon ? curData.icon[0] : '50';
+            var warnings = curData.warningMessage ? curData.warningMessage : [];
 
-            let warningHtml = '';
+            var warningHtml = '';
             if (warnings.length > 0) {
-                warningHtml = `<div class="w-warn">${warnings[0]}</div>`;
+                warningHtml = '<div class="w-warn">' + warnings[0] + '</div>';
             }
 
-            // 更新佈局：圖上、溫度及警告下
-            document.getElementById('current-weather').innerHTML = `
-                <img src="https://www.hko.gov.hk/images/wxicon/pic${icon}.png" class="w-icon" alt="圖">
-                <div class="w-temp">${temp}°C</div>
-                ${warningHtml}
-            `;
+            document.getElementById('current-weather').innerHTML = 
+                '<img src="https://www.hko.gov.hk/images/wxicon/pic' + icon + '.png" class="w-icon" alt="圖">' +
+                '<div class="w-temp">' + temp + '°C</div>' +
+                warningHtml;
+        });
 
-            // 四日預報
-            const fndRes = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=tc');
-            const fndData = await fndRes.json();
-            
-            const forecastDays = fndData.weatherForecast.slice(0, 4);
-            const forecastHtml = forecastDays.map(day => {
-                const dateShort = day.forecastDate.substring(4, 6) + '/' + day.forecastDate.substring(6, 8);
-                // 加入相對濕度，並稍微壓縮字串格式（例如 24°-28°，去除多餘空格）以節省橫向空間
-                return `
-                    <div class="f-day">
-                        <div class="f-date-container">
-                            <div class="f-date">${dateShort}</div>
-                            <div class="f-week">(${day.week})</div>
-                        </div>
-                        <img src="https://www.hko.gov.hk/images/wxicon/pic${day.ForecastIcon}.png" class="f-icon" alt="預報">
-                        <div class="f-temp">${day.forecastMintemp.value}°-${day.forecastMaxtemp.value}°</div>
-                        <div class="f-rh">${day.forecastMinrh.value}%-${day.forecastMaxrh.value}%</div>
-                    </div>
-                `;
-            }).join('');
-            
-            document.getElementById('forecast-container').innerHTML = forecastHtml;
-        } catch (e) {
-            console.error(e);
-        }
+        // 四日預報
+        makeRequest('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=tc', function(fndData) {
+            if (fndData && fndData.weatherForecast) {
+                var forecastHtml = '';
+                var maxDays = Math.min(4, fndData.weatherForecast.length);
+                
+                for(var i=0; i<maxDays; i++) {
+                    var day = fndData.weatherForecast[i];
+                    var dateStrFull = day.forecastDate;
+                    var dateShort = dateStrFull.substring(4, 6) + '/' + dateStrFull.substring(6, 8);
+                    
+                    forecastHtml += 
+                        '<div class="f-day">' +
+                            '<div class="f-date-container">' +
+                                '<div class="f-date">' + dateShort + '</div>' +
+                                '<div class="f-week">(' + day.week + ')</div>' +
+                            '</div>' +
+                            '<img src="https://www.hko.gov.hk/images/wxicon/pic' + day.ForecastIcon + '.png" class="f-icon" alt="預報">' +
+                            '<div class="f-temp">' + day.forecastMintemp.value + '°- ' + day.forecastMaxtemp.value + '°</div>' +
+                            '<div class="f-rh">' + day.forecastMinrh.value + '%- ' + day.forecastMaxrh.value + '%</div>' +
+                        '</div>';
+                }
+                document.getElementById('forecast-container').innerHTML = forecastHtml;
+            }
+        });
     }
 
     // === 系統初始化 ===
-    window.onload = async () => {
-        await checkPublicHoliday();
-
-        updateClock();
-        updateShuttleBus();
-        updateKMB();
-        updateWeather();
+    window.onload = function() {
+        checkPublicHoliday(function() {
+            updateClock();
+            updateShuttleBus();
+            updateKMB();
+            updateWeather();
+        });
 
         // 排程更新
         setInterval(updateClock, 1000);
-        setInterval(() => {
+        setInterval(function() {
             updateKMB();
             updateShuttleBus();
         }, 60 * 1000);
