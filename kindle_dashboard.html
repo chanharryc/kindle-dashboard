@@ -31,14 +31,14 @@
             position: relative;
         }
 
-        /* ===== 區塊絕對定位切割 ===== */
+        /* ===== 區塊絕對定位切割 (加粗邊框 4px) ===== */
         .row-top {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 25%;
-            border-bottom: 3px solid #000000;
+            border-bottom: 4px solid #000000;
         }
         
         .box-time {
@@ -47,9 +47,7 @@
             left: 0;
             width: 50%;
             height: 100%;
-            border-right: 3px solid #000000;
-            text-align: center;
-            padding-top: 5%;
+            border-right: 4px solid #000000;
         }
         
         .box-weather {
@@ -58,8 +56,6 @@
             right: 0;
             width: 50%;
             height: 100%;
-            text-align: center;
-            padding-top: 3%;
         }
 
         .row-mid {
@@ -68,28 +64,21 @@
             left: 0;
             width: 100%;
             height: 50%;
-            border-bottom: 3px solid #000000;
+            border-bottom: 4px solid #000000;
         }
         
+        .box-bus-kmb, .box-bus-shuttle {
+            position: absolute;
+            top: 0;
+            width: 50%;
+            height: 100%;
+        }
         .box-bus-kmb {
-            position: absolute;
-            top: 0;
             left: 0;
-            width: 50%;
-            height: 100%;
-            border-right: 3px solid #000000;
-            text-align: center;
-            padding-top: 10px;
+            border-right: 4px solid #000000;
         }
-        
         .box-bus-shuttle {
-            position: absolute;
-            top: 0;
             right: 0;
-            width: 50%;
-            height: 100%;
-            text-align: center;
-            padding-top: 10px;
         }
 
         .row-bottom {
@@ -105,9 +94,7 @@
             top: 0;
             height: 100%;
             width: 25%;
-            border-right: 1px dashed #000000;
-            text-align: center;
-            padding-top: 5px;
+            border-right: 2px dashed #000000;
         }
         .f-day-1 { left: 0; }
         .f-day-2 { left: 25%; }
@@ -115,68 +102,121 @@
         .f-day-4 { left: 75%; border-right: none; }
 
 
+        /* ===== 內部置中對齊黑魔法 (兼容舊版 WebKit) ===== */
+        .center-vertical {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            -webkit-transform: translateY(-50%);
+            transform: translateY(-50%);
+            text-align: center;
+        }
+
+        /* ===== 巴士區塊三段式對齊 (保證左右高度完全一致) ===== */
+        .bus-top {
+            position: absolute;
+            top: 15px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+        }
+        .bus-mid {
+            position: absolute;
+            top: 55%; /* 稍為偏下，留空間給標題 */
+            left: 0;
+            width: 100%;
+            -webkit-transform: translateY(-50%);
+            transform: translateY(-50%);
+            text-align: center;
+        }
+        .bus-bot {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+        }
+
+
         /* ===== 內部文字排版 ===== */
-        .time-main { font-size: 4.5rem; font-weight: bold; line-height: 1.1; }
-        .date-main { font-size: 1.2rem; font-weight: bold; }
+        .time-main { font-size: 4.8rem; font-weight: bold; line-height: 1; margin-bottom: 8px; }
+        .date-main { font-size: 1.3rem; font-weight: bold; }
         
         .w-icon { width: 75px; height: 75px; -webkit-filter: grayscale(100%); filter: grayscale(100%); margin-bottom: 5px; }
-        .w-temp { font-size: 2.8rem; font-weight: bold; line-height: 1; }
+        .w-temp { font-size: 3rem; font-weight: bold; line-height: 1; }
         
-        .bus-title { font-size: 1.6rem; font-weight: bold; border-bottom: 2px solid #000000; padding-bottom: 5px; margin: 0 10px 5px 10px;}
+        .bus-title { font-size: 1.6rem; font-weight: bold; border-bottom: 2px solid #000000; padding-bottom: 4px; margin: 0 15px 5px 15px;}
         .bus-route { font-size: 1.1rem; font-weight: bold; }
-        .bus-tag { display: inline-block; font-size: 0.9rem; border: 1px solid #000000; border-radius: 10px; padding: 2px 6px; margin: 5px 0;}
+        .bus-tag { display: inline-block; font-size: 0.9rem; border: 1px solid #000000; border-radius: 10px; padding: 2px 8px; margin-top: 5px;}
         
-        .eta-main-wrapper { margin-top: 20px; }
-        .eta-main { font-size: 3.5rem; font-weight: bold; line-height: 1.1; }
-        .eta-sub { font-size: 1.2rem; font-weight: bold; }
-        .eta-sub-small { font-size: 1rem; }
-        .eta-update { font-size: 0.8rem; margin-top: 15px; }
+        /* ETA 數字稍微縮小一點點，防止過百分鐘時太迫 */
+        .eta-main { font-size: 3rem; font-weight: bold; line-height: 1.1; margin-bottom: 5px; }
+        .eta-sub { font-size: 1.1rem; font-weight: bold; line-height: 1.3; }
+        .eta-sub-small { font-size: 0.95rem; }
+        .eta-update { font-size: 0.85rem; color: #333; }
 
         .f-date { font-size: 1.1rem; font-weight: bold; line-height: 1.2; }
         .f-week { font-size: 1rem; font-weight: bold; line-height: 1.2; }
-        .f-icon { width: 45px; height: 45px; -webkit-filter: grayscale(100%); filter: grayscale(100%); margin: 3px 0; }
+        .f-icon { width: 50px; height: 50px; -webkit-filter: grayscale(100%); filter: grayscale(100%); margin: 5px 0; }
         .f-temp { font-size: 1.1rem; font-weight: bold; }
-        .f-rh { font-size: 0.9rem; font-weight: bold; }
+        .f-rh { font-size: 0.95rem; font-weight: bold; margin-top: 2px; }
 
     </style>
 </head>
 <body>
 
 <div class="dashboard">
-    <!-- 上方 -->
+    <!-- 上方：時間與天氣 -->
     <div class="row-top">
         <div class="box-time">
-            <div class="time-main" id="local-time">--:--</div>
-            <div class="date-main" id="local-date">載入中...</div>
+            <div class="center-vertical">
+                <div class="time-main" id="local-time">--:--</div>
+                <div class="date-main" id="local-date">載入中...</div>
+            </div>
         </div>
-        <div class="box-weather" id="current-weather">
-            載入天氣中...
+        <div class="box-weather">
+            <div class="center-vertical" id="current-weather">
+                載入天氣中...
+            </div>
         </div>
     </div>
 
-    <!-- 中間 -->
+    <!-- 中間：巴士 (強制三段式對齊) -->
     <div class="row-mid">
+        <!-- 九巴 -->
         <div class="box-bus-kmb">
-            <div class="bus-title">九巴 234B</div>
-            <div class="bus-route">油柑頭 ➔ 荃灣西</div>
-            <div class="eta-main-wrapper" id="kmb-container">
+            <div class="bus-top">
+                <div class="bus-title">九巴 234B</div>
+                <div class="bus-route">油柑頭 ➔ 荃灣西</div>
+            </div>
+            <div class="bus-mid" id="kmb-mid">
                 載入中...
+            </div>
+            <div class="bus-bot" id="kmb-bot">
+                <div class="eta-update">--:--</div>
             </div>
         </div>
         
+        <!-- 村巴 -->
         <div class="box-bus-shuttle">
-            <div class="bus-title">恆麗園村巴</div>
-            <div class="bus-route">往 荃灣</div>
-            <div class="bus-tag" id="shuttle-type">載入中</div>
-            <div class="eta-main-wrapper" id="shuttle-container">
+            <div class="bus-top">
+                <div class="bus-title">恆麗園村巴</div>
+                <div class="bus-route">往 荃灣</div>
+                <div id="shuttle-tag-container"></div>
+            </div>
+            <div class="bus-mid" id="shuttle-mid">
                 計算中...
+            </div>
+            <div class="bus-bot" id="shuttle-bot">
+                <div class="eta-update">--:--</div>
             </div>
         </div>
     </div>
 
-    <!-- 下方 -->
+    <!-- 下方：天氣預報 -->
     <div class="row-bottom" id="forecast-container">
-        載入預報中...
+        <!-- JS 將自動填入 .f-day 區塊 -->
     </div>
 </div>
 
@@ -213,21 +253,18 @@
         xhr.send();
     }
 
-    // ===== 穩定版時間同步機制 (加了強制逾時防卡死) =====
+    // ===== 穩定版時間同步機制 =====
     function syncNetworkTime() {
         var xhr = new XMLHttpRequest();
         var url = window.location.href.split('#')[0];
         url += (url.indexOf('?') === -1 ? '?' : '&') + '_=' + new Date().getTime();
         
         var isResolved = false;
-
         function doFallback() {
             if (isResolved) return;
             isResolved = true;
             fallbackLocalTime();
         }
-
-        // 防卡死：3秒後如果拿不到網路時間，強制使用 Kindle 內部時間
         setTimeout(doFallback, 3000);
 
         xhr.open('HEAD', url, true);
@@ -303,7 +340,6 @@
                 for(var i=0; i<events.length; i++) {
                     var e = events[i];
                     if (e.dtstart) {
-                        // 更安全的陣列判斷寫法，相容古董瀏覽器
                         var dt = (Object.prototype.toString.call(e.dtstart) === '[object Array]') ?
                                  (typeof e.dtstart[0] === 'string' ? e.dtstart[0] : e.dtstart[0].value) :
                                  e.dtstart;
@@ -346,7 +382,8 @@
             scheduleName = "平日班次";
         }
 
-        document.getElementById('shuttle-type').innerText = scheduleName;
+        // 填入標籤 (上方)
+        document.getElementById('shuttle-tag-container').innerHTML = '<span class="bus-tag">' + scheduleName + '</span>';
 
         var upcoming = [];
         for(var i=0; i<activeSchedule.length; i++) {
@@ -361,20 +398,22 @@
             var nextBus = upcoming[0];
             var diffMins = parseTimeToMins(nextBus) - currentMins;
             
+            // 填入內容 (中間)
             var html = '<div class="eta-main">' + (diffMins === 0 ? '即將開出' : diffMins + ' 分鐘') + '</div>';
             html += '<div class="eta-sub">本班: ' + nextBus + '</div>';
             
             if (upcoming.length > 1) {
-                // 安全的陣列裁切寫法
                 var nextBuses = [];
                 for(var k=1; k<Math.min(3, upcoming.length); k++) { nextBuses.push(upcoming[k]); }
                 html += '<div class="eta-sub eta-sub-small">隨後: ' + nextBuses.join(', ') + '</div>';
             }
-            html += '<div class="eta-update">更新: ' + updateTimeStr + '</div>';
-            document.getElementById('shuttle-container').innerHTML = html;
+            document.getElementById('shuttle-mid').innerHTML = html;
         } else {
-            document.getElementById('shuttle-container').innerHTML = '<div class="eta-main" style="font-size: 2.2rem;">今日已完結</div><div class="eta-update">更新: ' + updateTimeStr + '</div>';
+            document.getElementById('shuttle-mid').innerHTML = '<div class="eta-main" style="margin-top: 20px;">今日已完結</div>';
         }
+        
+        // 填入更新時間 (底部)
+        document.getElementById('shuttle-bot').innerHTML = '<div class="eta-update">更新: ' + updateTimeStr + '</div>';
     }
 
     // ===== 更新 234B =====
@@ -388,7 +427,8 @@
             var updateTimeStr = pad(hkDate.getUTCHours()) + ':' + pad(hkDate.getUTCMinutes());
 
             if (err || !etaData || !etaData.data) {
-                document.getElementById('kmb-container').innerHTML = "<div class='eta-sub'>API 載入失敗</div><div class='eta-update'>" + updateTimeStr + "</div>";
+                document.getElementById('kmb-mid').innerHTML = '<div class="eta-main">API 載入失敗</div>';
+                document.getElementById('kmb-bot').innerHTML = '<div class="eta-update">更新: ' + updateTimeStr + '</div>';
                 return;
             }
             
@@ -418,11 +458,12 @@
                     for(var j=1; j<Math.min(3, etas.length); j++) { subEtas.push(etas[j] + '分'); }
                     html += '<div class="eta-sub eta-sub-small">隨後: ' + subEtas.join(', ') + '</div>';
                 }
-                html += '<div class="eta-update">更新: ' + updateTimeStr + '</div>';
-                document.getElementById('kmb-container').innerHTML = html;
+                document.getElementById('kmb-mid').innerHTML = html;
             } else {
-                document.getElementById('kmb-container').innerHTML = '<div class="eta-main" style="font-size: 2.2rem;">暫無班次</div><div class="eta-update">更新: ' + updateTimeStr + '</div>';
+                document.getElementById('kmb-mid').innerHTML = '<div class="eta-main" style="margin-top: 20px;">暫無班次</div>';
             }
+            
+            document.getElementById('kmb-bot').innerHTML = '<div class="eta-update">更新: ' + updateTimeStr + '</div>';
         });
     }
 
@@ -436,8 +477,8 @@
                 }
                 var icon = curData.icon ? curData.icon[0] : '50';
                 
-                var html = '<img src="https://www.hko.gov.hk/images/wxicon/pic' + icon + '.png" class="w-icon">';
-                html += '<div class="w-temp">' + temp + '°C</div>';
+                var html = '<img src="https://www.hko.gov.hk/images/wxicon/pic' + icon + '.png" class="w-icon"><br>';
+                html += '<span class="w-temp">' + temp + '°C</span>';
                 document.getElementById('current-weather').innerHTML = html;
             }
         });
@@ -451,12 +492,13 @@
                     var dateStr = day.forecastDate.substring(4,6) + '/' + day.forecastDate.substring(6,8);
                     
                     html += '<div class="f-day f-day-' + (i+1) + '">';
+                    html += '<div class="center-vertical">';
                     html += '<div class="f-date">' + dateStr + '</div>';
                     html += '<div class="f-week">(' + day.week + ')</div>';
                     html += '<img src="https://www.hko.gov.hk/images/wxicon/pic' + day.ForecastIcon + '.png" class="f-icon">';
                     html += '<div class="f-temp">' + day.forecastMintemp.value + '°- ' + day.forecastMaxtemp.value + '°</div>';
                     html += '<div class="f-rh">' + day.forecastMinrh.value + '%-' + day.forecastMaxrh.value + '%</div>';
-                    html += '</div>';
+                    html += '</div></div>';
                 }
                 document.getElementById('forecast-container').innerHTML = html;
             }
