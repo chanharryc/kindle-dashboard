@@ -25,11 +25,10 @@
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
         }
 
-        /* 隱藏瀏覽器上方選單列留下的空間 (若有) */
         .dashboard {
             width: 100%;
             height: 100%;
-            position: relative; /* 作為絕對定位的基準 */
+            position: relative;
         }
 
         /* ===== 區塊絕對定位切割 ===== */
@@ -105,7 +104,6 @@
             height: 25%;
         }
         
-        /* 預報 4 天，每格 25% 寬 */
         .f-day {
             position: absolute;
             top: 0;
@@ -132,7 +130,6 @@
         .bus-route { font-size: 1.1rem; font-weight: bold; }
         .bus-tag { display: inline-block; font-size: 0.9rem; border: 1px solid var(--fg); border-radius: 10px; padding: 2px 6px; margin: 5px 0;}
         
-        /* 使用 float 或 margin 推動元素到底部在絕對定位中較難，改用 padding 固定位置 */
         .eta-main-wrapper { margin-top: 20px; }
         .eta-main { font-size: 3.5rem; font-weight: bold; line-height: 1.1; }
         .eta-sub { font-size: 1.2rem; font-weight: bold; }
@@ -150,7 +147,6 @@
 <body>
 
 <div class="dashboard">
-
     <!-- 上方 -->
     <div class="row-top">
         <div class="box-time">
@@ -184,16 +180,14 @@
 
     <!-- 下方 -->
     <div class="row-bottom" id="forecast-container">
-        <!-- 預報位 -->
         載入預報中...
     </div>
-
 </div>
 
 <script>
     // ===== 全局變數 =====
     var isPublicHoliday = false;
-    var currentNetTimeMs = 0; // 儲存網路時間 (毫秒)
+    var currentNetTimeMs = 0; // 儲存已調整為香港時間的虛擬 UTC 毫秒
     var timeSyncTimer = null;
 
     // 恆麗園村巴資料
@@ -203,10 +197,9 @@
         sun: ["08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:05", "12:40", "13:15", "13:50", "14:25", "15:00", "15:35", "16:10", "16:45", "17:20", "17:55", "18:30", "18:55", "19:20", "19:45", "20:10", "20:35", "21:00"]
     };
 
-    // 格式化數字 (補0)
     function pad(n) { return n < 10 ? '0' + n : n; }
 
-    // ===== 自建 AJAX 請求函數 (相容 ES5) =====
+    // 自建 AJAX (相容舊 Kindle)
     function fetchJSON(url, callback) {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', url, true);
@@ -218,87 +211,87 @@
                         callback(null, data);
                     } catch (e) { callback(e, null); }
                 } else {
-                    callback(new Error("Request Failed"), null);
+                    callback(new Error("Failed"), null);
                 }
             }
         };
         xhr.send();
     }
 
-    // ===== 解決時間不準：從網路抓真實香港時間 =====
+    // ===== 全新時間同步機制 (向 Github 伺服器要時間，不依賴第三方 API) =====
     function syncNetworkTime() {
-        // 使用 World Time API 獲取香港時間
-        fetchJSON('http://worldtimeapi.org/api/timezone/Asia/Hong_Kong', function(err, data) {
-            if (!err && data && data.unixtime) {
-                // 將 unix time 轉為毫秒，並加上網路延遲的緩衝
-                currentNetTimeMs = (data.unixtime * 1000) + 500; 
-                
-                // 開始內部計時器，每秒將 currentNetTimeMs 加 1000
-                if(timeSyncTimer) clearInterval(timeSyncTimer);
-                timeSyncTimer = setInterval(function(){
-                    currentNetTimeMs += 1000;
-                    renderClock(); // 每秒重繪時鐘
-                }, 1000);
-                
-                // 拿到正確時間後才執行其他更新，確保它們抓到的 now 是準確的
-                checkPublicHoliday();
-                updateKMB();
-                updateShuttleBus();
-                updateWeather();
-            } else {
-                // 如果抓不到網路時間 (可能 API 倒了)，只能回退到使用系統時間
-                document.getElementById('local-date').innerText = "時間同步失敗";
-                currentNetTimeMs = new Date().getTime();
-                setInterval(function(){
-                    currentNetTimeMs += 1000;
-                    renderClock();
-                }, 1000);
+        var xhr = new XMLHttpRequest();
+        var url = window.location.href.split('#')[0];
+        url += (url.indexOf('?') === -1 ? '?' : '&') + '_=' + new Date().getTime();
+        
+        xhr.open('HEAD', url, true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                var dateStr = xhr.getResponseHeader('Date'); // 取得 Github 伺服器的 GMT 時間
+                if (dateStr) {
+                    var utcEpoch = new Date(dateStr).getTime();
+                    // 強制加上 8 小時，轉化為香港時間的虛擬 UTC
+                    currentNetTimeMs = utcEpoch + (8 * 3600000); 
+                    startInternalClock();
+                } else {
+                    fallbackLocalTime();
+                }
             }
-        });
+        };
+        xhr.onerror = fallbackLocalTime;
+        xhr.send();
+    }
+
+    function fallbackLocalTime() {
+        if(currentNetTimeMs !== 0) return; 
+        var d = new Date();
+        currentNetTimeMs = d.getTime() + (d.getTimezoneOffset() * 60000) + (8 * 3600000);
+        startInternalClock();
+    }
+
+    function startInternalClock() {
+        if(timeSyncTimer) clearInterval(timeSyncTimer);
+        timeSyncTimer = setInterval(function(){
+            currentNetTimeMs += 1000;
+            renderClock();
+        }, 1000);
+        
+        checkPublicHoliday();
+        updateKMB();
+        updateShuttleBus();
+        updateWeather();
+    }
+
+    // 取得絕對準確的香港時間 Date 物件 (必需使用 getUTC 方法提取)
+    function getAccurateHKDate() {
+        return new Date(currentNetTimeMs);
     }
 
     // ===== 顯示時鐘 =====
     function renderClock() {
         if(currentNetTimeMs === 0) return;
+        var hkDate = getAccurateHKDate();
 
-        // 將網路抓取的毫秒數，強制轉換為香港時區的 Date 物件 (Hack 寫法)
-        // 因為 new Date(ms) 會根據瀏覽器本地時區顯示，如果 Kindle 錯區，顯示還是會錯。
-        // 所以我們要用 UTC 方法來硬算香港時間 (+8)
-        var d = new Date(currentNetTimeMs);
-        var utcMs = d.getTime() + (d.getTimezoneOffset() * 60000); // 轉回純 UTC 毫秒
-        var hkMs = utcMs + (3600000 * 8); // 加上香港 8 小時
-        var hkDate = new Date(hkMs);
-
-        var h = pad(hkDate.getHours());
-        var m = pad(hkDate.getMinutes());
-        var mon = hkDate.getMonth() + 1;
-        var day = hkDate.getDate();
+        // 必須用 getUTCxxx 來提取時間，因為我們把時間平移了
+        var h = pad(hkDate.getUTCHours());
+        var m = pad(hkDate.getUTCMinutes());
+        var mon = hkDate.getUTCMonth() + 1;
+        var day = hkDate.getUTCDate();
         var weekMap = ['日','一','二','三','四','五','六'];
-        var week = weekMap[hkDate.getDay()];
+        var week = weekMap[hkDate.getUTCDay()];
 
         document.getElementById('local-time').innerText = h + ':' + m;
         document.getElementById('local-date').innerText = mon + '/' + day + ' (' + week + ')' + (isPublicHoliday ? ' 紅日' : '');
     }
 
-    // 獲取當前的準確香港 Date 物件，供巴士計算 ETA 用
-    function getAccurateHKDate() {
-        if(currentNetTimeMs === 0) return new Date();
-        var d = new Date(currentNetTimeMs);
-        var utcMs = d.getTime() + (d.getTimezoneOffset() * 60000); 
-        var hkMs = utcMs + (3600000 * 8); 
-        return new Date(hkMs);
-    }
-
-
     // ===== 政府 1823 API: 檢查公眾假期 =====
     function checkPublicHoliday() {
         var hkDate = getAccurateHKDate();
-        var y = hkDate.getFullYear();
-        var m = pad(hkDate.getMonth() + 1);
-        var d = pad(hkDate.getDate());
+        var y = hkDate.getUTCFullYear();
+        var m = pad(hkDate.getUTCMonth() + 1);
+        var d = pad(hkDate.getUTCDate());
         var todayStr = String(y) + String(m) + String(d);
 
-        // 為求穩定，移除 LocalStorage 緩存，每次啟動查一次即可
         fetchJSON('https://www.1823.gov.hk/common/ical/tc.json', function(err, data) {
             if (!err && data && data.vcalendar && data.vcalendar[0].vevent) {
                 var holidays = [];
@@ -312,7 +305,6 @@
                 }
                 isPublicHoliday = (holidays.indexOf(todayStr) !== -1);
             }
-            // 檢查完假期再更新一次村巴時間表
             updateShuttleBus();
             renderClock();
         });
@@ -326,8 +318,8 @@
 
     function updateShuttleBus() {
         var hkDate = getAccurateHKDate();
-        var currentMins = hkDate.getHours() * 60 + hkDate.getMinutes();
-        var dayOfWeek = hkDate.getDay(); 
+        var currentMins = hkDate.getUTCHours() * 60 + hkDate.getUTCMinutes();
+        var dayOfWeek = hkDate.getUTCDay(); 
 
         var activeSchedule = [];
         var scheduleName = "";
@@ -352,7 +344,7 @@
             }
         }
         
-        var updateTimeStr = pad(hkDate.getHours()) + ':' + pad(hkDate.getMinutes());
+        var updateTimeStr = pad(hkDate.getUTCHours()) + ':' + pad(hkDate.getUTCMinutes());
 
         if (upcoming.length > 0) {
             var nextBus = upcoming[0];
@@ -368,24 +360,22 @@
             html += '<div class="eta-update">更新: ' + updateTimeStr + '</div>';
             document.getElementById('shuttle-container').innerHTML = html;
         } else {
-            document.getElementById('shuttle-container').innerHTML = '<div class="eta-main" style="font-size: 2rem;">今日已完結</div><div class="eta-update">更新: ' + updateTimeStr + '</div>';
+            document.getElementById('shuttle-container').innerHTML = '<div class="eta-main" style="font-size: 2.2rem;">今日已完結</div><div class="eta-update">更新: ' + updateTimeStr + '</div>';
         }
     }
 
-    // ===== 更新 234B (硬編碼車站 ID，極大降低崩潰率) =====
+    // ===== 更新 234B =====
     function updateKMB() {
         var route = '234B';
-        var stopId = '277DEAAFCFFCD64C'; // 234B 油柑頭 往 荃灣西
+        var stopId = '277DEAAFCFFCD64C'; 
         var dir = 'O'; 
 
-        var url = 'https://data.etabus.gov.hk/v1/transport/kmb/eta/' + stopId + '/' + route + '/1';
-        
-        fetchJSON(url, function(err, etaData) {
+        fetchJSON('https://data.etabus.gov.hk/v1/transport/kmb/eta/' + stopId + '/' + route + '/1', function(err, etaData) {
             var hkDate = getAccurateHKDate();
-            var updateTimeStr = pad(hkDate.getHours()) + ':' + pad(hkDate.getMinutes());
+            var updateTimeStr = pad(hkDate.getUTCHours()) + ':' + pad(hkDate.getUTCMinutes());
 
             if (err || !etaData || !etaData.data) {
-                document.getElementById('kmb-container').innerHTML = "<div class='eta-sub'>API 無回應</div><div class='eta-update'>" + updateTimeStr + "</div>";
+                document.getElementById('kmb-container').innerHTML = "<div class='eta-sub'>API 載入失敗</div><div class='eta-update'>" + updateTimeStr + "</div>";
                 return;
             }
             
@@ -393,21 +383,15 @@
             for(var i=0; i<etaData.data.length; i++) {
                 var d = etaData.data[i];
                 if (d.dir === dir && d.eta !== null) {
-                    var etaTime = new Date(d.eta).getTime();
-                    // 因為 KMB 回傳的是 ISO 8601，系統會自動轉本地。
-                    // 為了避免本地錯誤，我們把 KMB 的 ISO 字串硬拆來算 (最安全的作法)
-                    var etaStringStr = String(d.eta); // "2023-10-24T18:30:00+08:00"
+                    var etaStringStr = String(d.eta); 
                     if(etaStringStr.indexOf('T') !== -1) {
-                        var tPart = etaStringStr.split('T')[1].substring(0,5); // "18:30"
+                        var tPart = etaStringStr.split('T')[1].substring(0,5); 
                         var etaMins = parseTimeToMins(tPart);
-                        var nowMins = hkDate.getHours() * 60 + hkDate.getMinutes();
+                        var nowMins = hkDate.getUTCHours() * 60 + hkDate.getUTCMinutes();
                         
                         var diff = etaMins - nowMins;
-                        // 處理跨日問題
                         if(diff < -500) diff += 1440; 
-                        if(diff >= 0) {
-                            etas.push(diff);
-                        }
+                        if(diff >= 0) etas.push(diff);
                     }
                 }
             }
@@ -431,7 +415,6 @@
 
     // ===== 更新天氣 =====
     function updateWeather() {
-        // 1. 現在天氣
         fetchJSON('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc', function(err, curData) {
             if(!err && curData) {
                 var temp = '--';
@@ -446,7 +429,6 @@
             }
         });
 
-        // 2. 四日預報
         fetchJSON('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=tc', function(err, fndData) {
             if(!err && fndData && fndData.weatherForecast) {
                 var html = '';
@@ -470,22 +452,17 @@
 
     // ===== 系統啟動 =====
     window.onload = function() {
-        // 第一步：先抓取真實香港時間。抓到了就會連帶觸發其他更新。
         syncNetworkTime();
-
-        // 設立定期更新排程
-        // 巴士每 1 分鐘更新
+        
         setInterval(function() {
             updateKMB();
             updateShuttleBus();
         }, 60000);
         
-        // 天氣每 15 分鐘更新
         setInterval(function() {
             updateWeather();
         }, 900000);
         
-        // 網路時間每 1 小時重新校對一次，避免計時器飄移
         setInterval(function() {
             syncNetworkTime();
         }, 3600000);
