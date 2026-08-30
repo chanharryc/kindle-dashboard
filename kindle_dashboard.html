@@ -5,24 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kindle 資訊面板</title>
     <style>
-        /* ===== 針對舊版 Kindle 最安全的佈局設定 ===== */
-        :root {
-            --fg: #000000;
-        }
-
-        * {
-            box-sizing: border-box;
+        /* ===== Web 1.0 究極相容性 CSS (捨棄 vw/vh) ===== */
+        html, body {
+            width: 100%;
+            height: 100%;
             margin: 0;
             padding: 0;
-        }
-
-        html, body {
-            width: 100vw;
-            height: 100vh;
             overflow: hidden; 
             background-color: #ffffff;
             color: #000000;
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         .dashboard {
@@ -32,15 +32,13 @@
         }
 
         /* ===== 區塊絕對定位切割 ===== */
-        
-        /* 1. 上方區塊：高度 25% */
         .row-top {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 25%;
-            border-bottom: 3px solid var(--fg);
+            border-bottom: 3px solid #000000;
         }
         
         .box-time {
@@ -49,7 +47,7 @@
             left: 0;
             width: 50%;
             height: 100%;
-            border-right: 3px solid var(--fg);
+            border-right: 3px solid #000000;
             text-align: center;
             padding-top: 5%;
         }
@@ -64,14 +62,13 @@
             padding-top: 3%;
         }
 
-        /* 2. 中間區塊：高度 50% */
         .row-mid {
             position: absolute;
             top: 25%;
             left: 0;
             width: 100%;
             height: 50%;
-            border-bottom: 3px solid var(--fg);
+            border-bottom: 3px solid #000000;
         }
         
         .box-bus-kmb {
@@ -80,7 +77,7 @@
             left: 0;
             width: 50%;
             height: 100%;
-            border-right: 3px solid var(--fg);
+            border-right: 3px solid #000000;
             text-align: center;
             padding-top: 10px;
         }
@@ -95,7 +92,6 @@
             padding-top: 10px;
         }
 
-        /* 3. 下方區塊：高度 25% */
         .row-bottom {
             position: absolute;
             top: 75%;
@@ -109,7 +105,7 @@
             top: 0;
             height: 100%;
             width: 25%;
-            border-right: 1px dashed var(--fg);
+            border-right: 1px dashed #000000;
             text-align: center;
             padding-top: 5px;
         }
@@ -123,12 +119,12 @@
         .time-main { font-size: 4.5rem; font-weight: bold; line-height: 1.1; }
         .date-main { font-size: 1.2rem; font-weight: bold; }
         
-        .w-icon { width: 75px; height: 75px; filter: grayscale(100%); margin-bottom: 5px; }
+        .w-icon { width: 75px; height: 75px; -webkit-filter: grayscale(100%); filter: grayscale(100%); margin-bottom: 5px; }
         .w-temp { font-size: 2.8rem; font-weight: bold; line-height: 1; }
         
-        .bus-title { font-size: 1.6rem; font-weight: bold; border-bottom: 2px solid var(--fg); padding-bottom: 5px; margin: 0 10px 5px 10px;}
+        .bus-title { font-size: 1.6rem; font-weight: bold; border-bottom: 2px solid #000000; padding-bottom: 5px; margin: 0 10px 5px 10px;}
         .bus-route { font-size: 1.1rem; font-weight: bold; }
-        .bus-tag { display: inline-block; font-size: 0.9rem; border: 1px solid var(--fg); border-radius: 10px; padding: 2px 6px; margin: 5px 0;}
+        .bus-tag { display: inline-block; font-size: 0.9rem; border: 1px solid #000000; border-radius: 10px; padding: 2px 6px; margin: 5px 0;}
         
         .eta-main-wrapper { margin-top: 20px; }
         .eta-main { font-size: 3.5rem; font-weight: bold; line-height: 1.1; }
@@ -138,7 +134,7 @@
 
         .f-date { font-size: 1.1rem; font-weight: bold; line-height: 1.2; }
         .f-week { font-size: 1rem; font-weight: bold; line-height: 1.2; }
-        .f-icon { width: 45px; height: 45px; filter: grayscale(100%); margin: 3px 0; }
+        .f-icon { width: 45px; height: 45px; -webkit-filter: grayscale(100%); filter: grayscale(100%); margin: 3px 0; }
         .f-temp { font-size: 1.1rem; font-weight: bold; }
         .f-rh { font-size: 0.9rem; font-weight: bold; }
 
@@ -187,7 +183,7 @@
 <script>
     // ===== 全局變數 =====
     var isPublicHoliday = false;
-    var currentNetTimeMs = 0; // 儲存已調整為香港時間的虛擬 UTC 毫秒
+    var currentNetTimeMs = 0; 
     var timeSyncTimer = null;
 
     // 恆麗園村巴資料
@@ -199,7 +195,6 @@
 
     function pad(n) { return n < 10 ? '0' + n : n; }
 
-    // 自建 AJAX (相容舊 Kindle)
     function fetchJSON(url, callback) {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', url, true);
@@ -218,27 +213,38 @@
         xhr.send();
     }
 
-    // ===== 全新時間同步機制 (向 Github 伺服器要時間，不依賴第三方 API) =====
+    // ===== 穩定版時間同步機制 (加了強制逾時防卡死) =====
     function syncNetworkTime() {
         var xhr = new XMLHttpRequest();
         var url = window.location.href.split('#')[0];
         url += (url.indexOf('?') === -1 ? '?' : '&') + '_=' + new Date().getTime();
         
+        var isResolved = false;
+
+        function doFallback() {
+            if (isResolved) return;
+            isResolved = true;
+            fallbackLocalTime();
+        }
+
+        // 防卡死：3秒後如果拿不到網路時間，強制使用 Kindle 內部時間
+        setTimeout(doFallback, 3000);
+
         xhr.open('HEAD', url, true);
         xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4) {
-                var dateStr = xhr.getResponseHeader('Date'); // 取得 Github 伺服器的 GMT 時間
+            if (xhr.readyState === 4 && !isResolved) {
+                var dateStr = xhr.getResponseHeader('Date'); 
                 if (dateStr) {
+                    isResolved = true;
                     var utcEpoch = new Date(dateStr).getTime();
-                    // 強制加上 8 小時，轉化為香港時間的虛擬 UTC
                     currentNetTimeMs = utcEpoch + (8 * 3600000); 
                     startInternalClock();
                 } else {
-                    fallbackLocalTime();
+                    doFallback();
                 }
             }
         };
-        xhr.onerror = fallbackLocalTime;
+        xhr.onerror = doFallback;
         xhr.send();
     }
 
@@ -262,7 +268,6 @@
         updateWeather();
     }
 
-    // 取得絕對準確的香港時間 Date 物件 (必需使用 getUTC 方法提取)
     function getAccurateHKDate() {
         return new Date(currentNetTimeMs);
     }
@@ -272,7 +277,6 @@
         if(currentNetTimeMs === 0) return;
         var hkDate = getAccurateHKDate();
 
-        // 必須用 getUTCxxx 來提取時間，因為我們把時間平移了
         var h = pad(hkDate.getUTCHours());
         var m = pad(hkDate.getUTCMinutes());
         var mon = hkDate.getUTCMonth() + 1;
@@ -284,7 +288,7 @@
         document.getElementById('local-date').innerText = mon + '/' + day + ' (' + week + ')' + (isPublicHoliday ? ' 紅日' : '');
     }
 
-    // ===== 政府 1823 API: 檢查公眾假期 =====
+    // ===== 政府假期 API =====
     function checkPublicHoliday() {
         var hkDate = getAccurateHKDate();
         var y = hkDate.getUTCFullYear();
@@ -294,16 +298,23 @@
 
         fetchJSON('https://www.1823.gov.hk/common/ical/tc.json', function(err, data) {
             if (!err && data && data.vcalendar && data.vcalendar[0].vevent) {
-                var holidays = [];
+                var isHoliday = false;
                 var events = data.vcalendar[0].vevent;
                 for(var i=0; i<events.length; i++) {
                     var e = events[i];
                     if (e.dtstart) {
-                        var dt = Array.isArray(e.dtstart) ? (typeof e.dtstart[0] === 'string' ? e.dtstart[0] : e.dtstart[0].value) : e.dtstart;
-                        if(dt) holidays.push(dt);
+                        // 更安全的陣列判斷寫法，相容古董瀏覽器
+                        var dt = (Object.prototype.toString.call(e.dtstart) === '[object Array]') ?
+                                 (typeof e.dtstart[0] === 'string' ? e.dtstart[0] : e.dtstart[0].value) :
+                                 e.dtstart;
+                        
+                        if (dt === todayStr) {
+                            isHoliday = true;
+                            break;
+                        }
                     }
                 }
-                isPublicHoliday = (holidays.indexOf(todayStr) !== -1);
+                isPublicHoliday = isHoliday;
             }
             updateShuttleBus();
             renderClock();
@@ -354,8 +365,10 @@
             html += '<div class="eta-sub">本班: ' + nextBus + '</div>';
             
             if (upcoming.length > 1) {
-                var nextBuses = upcoming.slice(1, 3).join(', ');
-                html += '<div class="eta-sub eta-sub-small">隨後: ' + nextBuses + '</div>';
+                // 安全的陣列裁切寫法
+                var nextBuses = [];
+                for(var k=1; k<Math.min(3, upcoming.length); k++) { nextBuses.push(upcoming[k]); }
+                html += '<div class="eta-sub eta-sub-small">隨後: ' + nextBuses.join(', ') + '</div>';
             }
             html += '<div class="eta-update">更新: ' + updateTimeStr + '</div>';
             document.getElementById('shuttle-container').innerHTML = html;
