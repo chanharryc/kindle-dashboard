@@ -1,0 +1,41 @@
+name: Update KMB 234B ETA cache
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-kmb-eta
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch KMB 234B ETA (server-side, avoids Kindle browser CORS/TLS limitations)
+        run: |
+          set -e
+          curl -sf --max-time 15 \
+            'https://data.etabus.gov.hk/v1/transport/kmb/eta/277DEAAFCFFCD64C/234B/1' \
+            -o kmb_eta.json.tmp
+          python3 -c "import json; json.load(open('kmb_eta.json.tmp'))"
+          mv kmb_eta.json.tmp kmb_eta.json
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add kmb_eta.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update KMB 234B ETA cache"
+            git push
+          else
+            echo "No change in KMB ETA data, skipping commit."
+          fi
