@@ -8,7 +8,7 @@
         /* ===== 終極防捲軸 CSS ===== */
         html, body {
             width: 100%;
-            height: 95vh; /* 大幅縮減總高度，確保絕對不出現捲軸 */
+            height: 100%; /* 捨棄 vh，改回最穩定的 100% */
             margin: 0;
             padding: 0;
             overflow: hidden !important; 
@@ -30,17 +30,21 @@
         .dashboard {
             width: 100%;
             height: 100%;
-            display: table;
-            table-layout: fixed;
+            display: block; /* 改變這裡：不使用全局大表格，避免欄位被鎖死 */
         }
 
-        /* ===== 行設定 ===== */
-        .row { display: table-row; }
+        /* ===== 行設定 (每一行獨立成一個 Table) ===== */
+        .row { 
+            display: table; 
+            width: 100%;
+            table-layout: fixed;
+        }
         
-        .row-top { height: 25%; }
-        .row-bus { height: 35%; }
-        .row-hourly { height: 20%; } /* 確保這行有足夠高度 */
-        .row-bottom { height: 20%; }
+        /* 刻意將總高度壓縮至 94%，剩餘 6% 空間作為緩衝，絕對消滅捲軸 */
+        .row-top { height: 24%; }
+        .row-bus { height: 34%; }
+        .row-hourly { height: 18%; } 
+        .row-bottom { height: 18%; }
 
         /* ===== 列與儲存格設定 ===== */
         .cell {
@@ -298,16 +302,19 @@
                 }
                 
                 var etas = [];
-                var nowTimeMs = hkDate.getTime();
+                var nowMins = hkDate.getHours() * 60 + hkDate.getMinutes();
                 
                 for(var i=0; i<etaData.data.length; i++) {
                     var d = etaData.data[i];
                     if (d.dir === 'O' && d.eta !== null) {
-                        var etaTime = new Date(d.eta).getTime();
-                        if(!isNaN(etaTime)) {
-                            var diffMs = etaTime - nowTimeMs;
-                            var diffMins = Math.round(diffMs / 60000);
-                            if (diffMins >= 0) etas.push(diffMins);
+                        // 手動拆解字串，避開 Kindle 舊版瀏覽器對 ISO 格式的死機 Bug
+                        var etaStringStr = String(d.eta); 
+                        if(etaStringStr.indexOf('T') !== -1) {
+                            var tPart = etaStringStr.split('T')[1].substring(0,5); 
+                            var etaMins = parseTimeToMins(tPart);
+                            var diff = etaMins - nowMins;
+                            if(diff < -500) diff += 1440; // 處理跨日
+                            if(diff >= 0) etas.push(diff);
                         }
                     }
                 }
