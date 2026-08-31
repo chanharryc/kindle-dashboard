@@ -311,36 +311,57 @@
     }
 
     function updateKMB() {
+        // 使用更安全的 try-catch 包覆，並改寫 ETA 擷取邏輯，避開複雜字串操作
         fetchJSON('https://data.etabus.gov.hk/v1/transport/kmb/eta/277DEAAFCFFCD64C/234B/1', function(err, etaData) {
             var hkDate = getAccurateHKDate();
             var updateTimeStr = pad(hkDate.getHours()) + ':' + pad(hkDate.getMinutes());
-            if (err || !etaData || !etaData.data) {
-                document.getElementById('kmb-mid').innerHTML = '<div class="eta-main">載入失敗</div>';
-                document.getElementById('kmb-bot').innerHTML = '<div class="eta-update">更新: ' + updateTimeStr + '</div>';
-                return;
-            }
-            var etas = [];
-            for(var i=0; i<etaData.data.length; i++) {
-                var d = etaData.data[i];
-                if (d.dir === 'O' && d.eta !== null) {
-                    var etaStringStr = String(d.eta); 
-                    if(etaStringStr.indexOf('T') !== -1) {
-                        var diff = parseTimeToMins(etaStringStr.split('T')[1].substring(0,5)) - (hkDate.getHours() * 60 + hkDate.getMinutes());
-                        if(diff < -500) diff += 1440; 
-                        if(diff >= 0) etas.push(diff);
+            
+            try {
+                if (err || !etaData || !etaData.data) {
+                    throw new Error("No data");
+                }
+                
+                var etas = [];
+                var nowTimeMs = hkDate.getTime();
+                
+                for(var i=0; i<etaData.data.length; i++) {
+                    var d = etaData.data[i];
+                    if (d.dir === 'O' && d.eta !== null) {
+                        // 放棄截取字串，直接依賴瀏覽器的 Date.parse()，對舊版瀏覽器較寬容
+                        // eta 格式: "2023-11-09T17:09:25+08:00"
+                        var etaTime = new Date(d.eta).getTime();
+                        
+                        if(!isNaN(etaTime)) {
+                            // 計算相差分鐘數，不再處理跨日問題，單純計算時間差
+                            var diffMs = etaTime - nowTimeMs;
+                            var diffMins = Math.round(diffMs / 60000);
+                            
+                            // 只顯示大於等於 0 的時間
+                            if (diffMins >= 0) {
+                                etas.push(diffMins);
+                            }
+                        }
                     }
                 }
-            }
-            etas.sort(function(a, b){ return a - b; });
-            if (etas.length > 0) {
-                var html = '<div class="eta-main">' + (etas[0] === 0 ? '即將抵達' : etas[0] + ' 分鐘') + '</div>';
-                if (etas.length > 1) {
-                    var subEtas = [];
-                    for(var j=1; j<Math.min(3, etas.length); j++) subEtas.push(etas[j] + '分');
-                    html += '<div class="eta-sub eta-sub-small">隨後: ' + subEtas.join(', ') + '</div>';
+                
+                etas.sort(function(a, b){ return a - b; });
+                
+                if (etas.length > 0) {
+                    var html = '<div class="eta-main">' + (etas[0] === 0 ? '即將抵達' : etas[0] + ' 分鐘') + '</div>';
+                    if (etas.length > 1) {
+                        var subEtas = [];
+                        for(var j=1; j<Math.min(3, etas.length); j++) subEtas.push(etas[j] + '分');
+                        html += '<div class="eta-sub eta-sub-small">隨後: ' + subEtas.join(', ') + '</div>';
+                    }
+                    document.getElementById('kmb-mid').innerHTML = html;
+                } else { 
+                    document.getElementById('kmb-mid').innerHTML = '<div class="eta-main">暫無班次</div>'; 
                 }
-                document.getElementById('kmb-mid').innerHTML = html;
-            } else { document.getElementById('kmb-mid').innerHTML = '<div class="eta-main">暫無班次</div>'; }
+            } catch (e) {
+                // 如果有任何異常，顯示錯誤訊息，避免卡在「載入中」
+                document.getElementById('kmb-mid').innerHTML = '<div class="eta-main" style="font-size: 2rem;">API 異常</div>';
+            }
+            
             document.getElementById('kmb-bot').innerHTML = '<div class="eta-update">更新: ' + updateTimeStr + '</div>';
         });
     }
@@ -368,7 +389,9 @@
             
             var cellId = 'h-' + i;
             var cell = document.getElementById(cellId);
-            if(cell) cell.innerHTML = html;
+            if(cell) {
+                cell.innerHTML = html;
+            }
         }
     }
 
