@@ -216,74 +216,87 @@
         xhr.send();
     }
 
-    /* HKO 天氣圖示代碼對照（日/夜分開處理，避免夜間「天晴」誤顯示做雷暴等錯配問題） */
-    function getSvgIcon(iconNumberStr) {
-        var n = parseInt(iconNumberStr, 10);
+    /* ===== 天氣圖示：按「狀態分類」畫 SVG，HKO 代碼同 WMO 代碼（Open-Meteo
+       逐小時預報用）分別對應返同一套分類，圖示唔使畫兩次 ===== */
+    var ICON_SVG = {
+        'sun-day': '<circle cx="12" cy="12" r="4"></circle><line x1="12" y1="2" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"></line><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"></line><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"></line>',
+        'moon-night': '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path>',
+        'partly-day': '<circle cx="9" cy="9" r="3.2"></circle><line x1="9" y1="2.5" x2="9" y2="4"></line><line x1="3.5" y1="9" x2="2" y2="9"></line><line x1="4.6" y1="4.6" x2="3.5" y2="3.5"></line><line x1="13.4" y1="4.6" x2="14.5" y2="3.5"></line><path d="M18 20H8.5a4.5 4.5 0 1 1 1.1-8.86A6 6 0 0 1 21 13.5 3.5 3.5 0 0 1 18 20Z"></path>',
+        'partly-night': '<path d="M14.5 3.5a4 4 0 1 0 3 6.8"></path><path d="M18 20H8.5a4.5 4.5 0 1 1 1.1-8.86A6 6 0 0 1 21 13.5 3.5 3.5 0 0 1 18 20Z"></path>',
+        'cloudy': '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>',
+        'rain-light': '<path d="M12 13v6"></path><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>',
+        'rain-mod': '<path d="M16 13v6"></path><path d="M8 13v6"></path><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>',
+        'thunder': '<path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"></path><polyline points="13 11 9 17 15 17 11 23"></polyline>',
+        'windy': '<path d="M9.59 4.59A2 2 0 1 1 11 8H2"></path><path d="M12.59 19.41A2 2 0 1 0 14 16H2"></path><path d="M17.73 7.73A2.5 2.5 0 1 1 19.5 12H2"></path>',
+        'snow': '<line x1="12" y1="2" x2="12" y2="22"></line><line x1="4.2" y1="6" x2="19.8" y2="18"></line><line x1="4.2" y1="18" x2="19.8" y2="6"></line>',
+        'cold': '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path>',
+        'cyclone': '<path d="M12 2a10 10 0 1 0 10 10"></path><path d="M12 6a6 6 0 1 0 6 6"></path><path d="M12 10a2 2 0 1 0 2 2"></path>',
+        'fog': '<line x1="3" y1="9" x2="21" y2="9"></line><line x1="5" y1="14" x2="19" y2="14"></line><line x1="3" y1="19" x2="21" y2="19"></line>'
+    };
+    // 需要非標準 stroke 設定嘅分類（粗線 / 實心），其餘一律用標準 2px 線條
+    var ICON_SVG_ATTRS = {
+        'rain-heavy': { d: '<path d="M16 13v8"></path><path d="M8 13v8"></path><path d="M12 15v8"></path><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>', attrs: 'stroke-width="2.5"' },
+        'showers': { d: '<path d="M16 13l-3 6"></path><path d="M9 13l-3 6"></path><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>', attrs: 'stroke-width="2.2"' },
+        'hot': { d: '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path>', attrs: 'fill="#000000" stroke-width="2"' }
+    };
+
+    function renderIconCategory(category) {
         var S = '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">';
         var E = '</svg>';
+        if (ICON_SVG_ATTRS[category]) {
+            var spec = ICON_SVG_ATTRS[category];
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" ' + spec.attrs + '>' + spec.d + '</svg>';
+        }
+        return S + (ICON_SVG[category] || ICON_SVG['cloudy']) + E;
+    }
 
-        // 晴朗 / 乾燥（日）
-        if (n === 50 || n === 51 || n === 81) {
-            return S + '<circle cx="12" cy="12" r="4"></circle><line x1="12" y1="2" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"></line><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"></line><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"></line>' + E;
-        }
-        // 天晴（夜）
-        if (n >= 70 && n <= 75) {
-            return S + '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path>' + E;
-        }
-        // 短暫陽光 / 部分時間有陽光（日）
-        if (n === 52 || n === 53 || n === 54) {
-            return S + '<circle cx="9" cy="9" r="3.2"></circle><line x1="9" y1="2.5" x2="9" y2="4"></line><line x1="3.5" y1="9" x2="2" y2="9"></line><line x1="4.6" y1="4.6" x2="3.5" y2="3.5"></line><line x1="13.4" y1="4.6" x2="14.5" y2="3.5"></line><path d="M18 20H8.5a4.5 4.5 0 1 1 1.1-8.86A6 6 0 0 1 21 13.5 3.5 3.5 0 0 1 18 20Z"></path>' + E;
-        }
-        // 大致多雲（夜）
-        if (n === 76 || n === 77) {
-            return S + '<path d="M14.5 3.5a4 4 0 1 0 3 6.8"></path><path d="M18 20H8.5a4.5 4.5 0 1 1 1.1-8.86A6 6 0 0 1 21 13.5 3.5 3.5 0 0 1 18 20Z"></path>' + E;
-        }
-        // 多雲 / 密雲
-        if (n === 60 || n === 61) {
-            return S + '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>' + E;
-        }
-        // 微雨（1 點雨滴，最輕）
-        if (n === 62) {
-            return S + '<path d="M12 13v6"></path><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>' + E;
-        }
-        // 雨（2 點雨滴，中等）
-        if (n === 63) {
-            return S + '<path d="M16 13v6"></path><path d="M8 13v6"></path><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>' + E;
-        }
-        // 大雨（3 點雨滴，粗線條，最重）
-        if (n === 64) {
-            return '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 13v8"></path><path d="M8 13v8"></path><path d="M12 15v8"></path><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path></svg>';
-        }
-        // 驟雨（斜向雨絲，表達陣性/急降嘅雨，同持續降雨區分）
-        if (n === 82) {
-            return '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 13l-3 6"></path><path d="M9 13l-3 6"></path><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path></svg>';
-        }
-        // 雷暴
-        if (n === 65) {
-            return S + '<path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"></path><polyline points="13 11 9 17 15 17 11 23"></polyline>' + E;
-        }
-        // 大風
-        if (n === 80) {
-            return S + '<path d="M9.59 4.59A2 2 0 1 1 11 8H2"></path><path d="M12.59 19.41A2 2 0 1 0 14 16H2"></path><path d="M17.73 7.73A2.5 2.5 0 1 1 19.5 12H2"></path>' + E;
-        }
-        // 雨夾雪 / 降雪
-        if (n === 83 || n === 84 || n === 85) {
-            return S + '<line x1="12" y1="2" x2="12" y2="22"></line><line x1="4.2" y1="6" x2="19.8" y2="18"></line><line x1="4.2" y1="18" x2="19.8" y2="6"></line>' + E;
-        }
-        // 酷熱（以實心溫度計區分）
-        if (n === 90) {
-            return '<svg viewBox="0 0 24 24" fill="#000000" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path></svg>';
-        }
-        // 寒冷（空心溫度計區分）
-        if (n === 91) {
-            return S + '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path>' + E;
-        }
-        // 熱帶氣旋警告
-        if (n === 92) {
-            return S + '<path d="M12 2a10 10 0 1 0 10 10"></path><path d="M12 6a6 6 0 1 0 6 6"></path><path d="M12 10a2 2 0 1 0 2 2"></path>' + E;
-        }
-        // 預設：多雲
-        return S + '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>' + E;
+    /* HKO 天氣圖示代碼 → 分類（日/夜分開處理，避免夜間「天晴」誤顯示做雷暴等錯配問題） */
+    function hkoCodeToCategory(iconNumberStr) {
+        var n = parseInt(iconNumberStr, 10);
+        if (n === 50 || n === 51 || n === 81) return 'sun-day';
+        if (n >= 70 && n <= 75) return 'moon-night';
+        if (n === 52 || n === 53 || n === 54) return 'partly-day';
+        if (n === 76 || n === 77) return 'partly-night';
+        if (n === 60 || n === 61) return 'cloudy';
+        if (n === 62) return 'rain-light';
+        if (n === 63) return 'rain-mod';
+        if (n === 64) return 'rain-heavy';
+        if (n === 82) return 'showers';
+        if (n === 65) return 'thunder';
+        if (n === 80) return 'windy';
+        if (n === 83 || n === 84 || n === 85) return 'snow';
+        if (n === 90) return 'hot';
+        if (n === 91) return 'cold';
+        if (n === 92) return 'cyclone';
+        return 'cloudy';
+    }
+
+    function getSvgIcon(iconNumberStr) {
+        return renderIconCategory(hkoCodeToCategory(iconNumberStr));
+    }
+
+    /* WMO weathercode（Open-Meteo 逐小時預報用）→ 分類 */
+    function wmoCodeToCategory(code, isDay) {
+        var n = parseInt(code, 10);
+        var day = isDay !== 0;
+        if (n === 0 || n === 1) return day ? 'sun-day' : 'moon-night';
+        if (n === 2) return day ? 'partly-day' : 'partly-night';
+        if (n === 3) return 'cloudy';
+        if (n === 45 || n === 48) return 'fog';
+        if (n === 51 || n === 53 || n === 56) return 'rain-light';
+        if (n === 55 || n === 57 || n === 66) return 'rain-mod';
+        if (n === 61) return 'rain-light';
+        if (n === 63) return 'rain-mod';
+        if (n === 65 || n === 67) return 'rain-heavy';
+        if (n === 71 || n === 73 || n === 75 || n === 77 || n === 85 || n === 86) return 'snow';
+        if (n === 80 || n === 81) return 'showers';
+        if (n === 82) return 'rain-heavy';
+        if (n === 95 || n === 96 || n === 99) return 'thunder';
+        return 'cloudy';
+    }
+
+    function getWmoSvgIcon(code, isDay) {
+        return renderIconCategory(wmoCodeToCategory(code, isDay));
     }
 
     function getWeatherDesc(iconNumberStr) {
@@ -486,32 +499,94 @@
         });
     }
 
-    function generateHourlyForecast() {
+    /* 後備做法：天文台冇提供逐小時預報，呢個純粹用「現時狀況」向後推算，
+       只喺 Open-Meteo 快取一時攞唔到嘅時候先用，好過個格留空 */
+    function renderHeuristicHourlyForecast() {
         if (currentTempC === null || currentIconId === null) return;
         var hkDate = getAccurateHKDate();
         var currentH = hkDate.getUTCHours();
-        
+
         for(var i=1; i<=6; i++) {
             var forecastH = (currentH + i) % 24;
             var timeLabel = pad(forecastH) + ':00';
-            
+
             var tempOffset = 0;
             if (forecastH >= 8 && forecastH <= 15) tempOffset = 1;
             else if (forecastH >= 17 && forecastH <= 21) tempOffset = -1;
-            
-            var randomShift = Math.floor(Math.random() * 3) - 1; 
+
+            var randomShift = Math.floor(Math.random() * 3) - 1;
             var expectedTemp = parseInt(currentTempC, 10) + tempOffset + randomShift;
 
             var html = '<div class="h-time">' + timeLabel + '</div>';
             html += '<div class="h-icon">' + getSvgIcon(nightAdjustedIcon(currentIconId, forecastH)) + '</div>';
             html += '<div class="h-temp">' + expectedTemp + '<span class="deg"></span></div>';
-            
+
             var cellId = 'h-' + i;
             var cell = document.getElementById(cellId);
             if(cell) {
                 cell.innerHTML = html;
             }
         }
+    }
+
+    function hkDateKey(y, m, d, h) { return y * 1000000 + m * 10000 + d * 100 + h; }
+
+    /* 用 GitHub Actions 每 30 分鐘由 Open-Meteo 攞返嚟嘅真正逐小時預報（見
+       hourly_forecast.json），揀出「而家之後」嘅 6 個鐘頭渲染。時間字串
+       "YYYY-MM-DDTHH:MM" 係香港本地時間（Open-Meteo 已經用 timezone=Asia/Hong_Kong
+       輸出，唔係 UTC），手動拆解字串讀年月日時，避開 Date 解析格式喺 Kindle
+       舊版瀏覽器嘅風險。回傳 true 代表成功渲染，false 代表冇合用嘅資料。 */
+    function renderRealHourlyForecast(hourlyList, hkDate) {
+        var nowKey = hkDateKey(hkDate.getUTCFullYear(), hkDate.getUTCMonth() + 1, hkDate.getUTCDate(), hkDate.getUTCHours());
+
+        var upcoming = [];
+        for (var i = 0; i < hourlyList.length && upcoming.length < 6; i++) {
+            var t = hourlyList[i] && hourlyList[i].time;
+            if (!t || t.length < 13) continue;
+            var ey = parseInt(t.substring(0, 4), 10);
+            var em = parseInt(t.substring(5, 7), 10);
+            var ed = parseInt(t.substring(8, 10), 10);
+            var eh = parseInt(t.substring(11, 13), 10);
+            var key = hkDateKey(ey, em, ed, eh);
+            if (key > nowKey) upcoming.push({ entry: hourlyList[i], hour: eh });
+        }
+
+        if (upcoming.length === 0) return false;
+
+        for (var j = 0; j < 6; j++) {
+            var cell = document.getElementById('h-' + (j + 1));
+            if (!cell) continue;
+            if (j >= upcoming.length) { cell.innerHTML = ''; continue; }
+            var u = upcoming[j];
+            var tempRounded = Math.round(u.entry.temp);
+            var html = '<div class="h-time">' + pad(u.hour) + ':00</div>';
+            html += '<div class="h-icon">' + getWmoSvgIcon(u.entry.code, u.entry.isDay) + '</div>';
+            html += '<div class="h-temp">' + tempRounded + '<span class="deg"></span></div>';
+            cell.innerHTML = html;
+        }
+        return true;
+    }
+
+    var HOURLY_CACHE_URL = 'hourly_forecast.json';
+
+    function updateHourlyForecast(isRetry) {
+        var hkDate = getAccurateHKDate();
+        fetchJSON(HOURLY_CACHE_URL + '?t=' + Date.now(), function(err, data) {
+            var ok = false;
+            try {
+                if (!err && data && data.hourly && data.hourly.length) {
+                    ok = renderRealHourlyForecast(data.hourly, hkDate);
+                }
+            } catch (e) { ok = false; }
+
+            if (ok) return;
+
+            if (!isRetry) {
+                setTimeout(function() { updateHourlyForecast(true); }, 5000);
+                return;
+            }
+            renderHeuristicHourlyForecast();
+        });
     }
 
     function updateWeather() {
@@ -529,7 +604,7 @@
                 html += '<div class="w-desc">' + getWeatherDesc(currentIconId) + (humidity !== null ? ' · 濕度 ' + humidity + '%' : '') + '</div>';
                 document.getElementById('current-weather').innerHTML = html;
 
-                generateHourlyForecast();
+                updateHourlyForecast();
             }
         });
 
