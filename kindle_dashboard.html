@@ -216,37 +216,66 @@
         xhr.send();
     }
 
-    /* ===== 天氣圖示：按「狀態分類」畫 SVG，HKO 代碼同 WMO 代碼（Open-Meteo
-       逐小時預報用）分別對應返同一套分類，圖示唔使畫兩次 ===== */
+    /* ===== 天氣圖示：Dark Sky 風格幼線條 outline 圖示 =====
+       設計原則：
+       - 統一 1.75px 幼線條、圓角，比原本嘅 2px 再幼身、更精緻
+       - 所有「有雲」嘅圖示共用同一個雲形狀（CLOUD），保持風格一致
+       - 雲本身填色白色（同背景一樣），畫喺被遮擋元素之後，做到「太陽/月亮
+         喺雲後面」嘅層次感，唔會出現線條互相穿插嘅雜亂感覺
+       - 雨/雪用實心細小圖形（水滴／圓點）畫喺雲下面，用實心元素同線條
+         outline 做對比，係 Dark Sky 圖示嘅招牌特徵
+       - 按「狀態分類」對應，HKO 代碼同 WMO 代碼（Open-Meteo 逐小時預報用）
+         分別對應返同一套分類，圖示唔使畫兩次 */
+    var CLOUD = 'M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z';
+    var CLOUD_EL = '<path d="' + CLOUD + '" fill="#ffffff"></path>';
+
+    function drop(cx, cy, rx, ry, angle) {
+        var t = angle ? ' transform="rotate(' + angle + ' ' + cx + ' ' + cy + ')"' : '';
+        return '<ellipse cx="' + cx + '" cy="' + cy + '" rx="' + rx + '" ry="' + ry + '" fill="#000000" stroke="none"' + t + '></ellipse>';
+    }
+    function dot(cx, cy, r) {
+        return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="#000000" stroke="none"></circle>';
+    }
+
     var ICON_SVG = {
-        'sun-day': '<circle cx="12" cy="12" r="4"></circle><line x1="12" y1="2" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"></line><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"></line><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"></line>',
-        'moon-night': '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path>',
-        'partly-day': '<circle cx="9" cy="9" r="3.2"></circle><line x1="9" y1="2.5" x2="9" y2="4"></line><line x1="3.5" y1="9" x2="2" y2="9"></line><line x1="4.6" y1="4.6" x2="3.5" y2="3.5"></line><line x1="13.4" y1="4.6" x2="14.5" y2="3.5"></line><path d="M18 20H8.5a4.5 4.5 0 1 1 1.1-8.86A6 6 0 0 1 21 13.5 3.5 3.5 0 0 1 18 20Z"></path>',
-        'partly-night': '<path d="M14.5 3.5a4 4 0 1 0 3 6.8"></path><path d="M18 20H8.5a4.5 4.5 0 1 1 1.1-8.86A6 6 0 0 1 21 13.5 3.5 3.5 0 0 1 18 20Z"></path>',
-        'cloudy': '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>',
-        'rain-light': '<path d="M12 13v6"></path><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>',
-        'rain-mod': '<path d="M16 13v6"></path><path d="M8 13v6"></path><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>',
-        'thunder': '<path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"></path><polyline points="13 11 9 17 15 17 11 23"></polyline>',
-        'windy': '<path d="M9.59 4.59A2 2 0 1 1 11 8H2"></path><path d="M12.59 19.41A2 2 0 1 0 14 16H2"></path><path d="M17.73 7.73A2.5 2.5 0 1 1 19.5 12H2"></path>',
-        'snow': '<line x1="12" y1="2" x2="12" y2="22"></line><line x1="4.2" y1="6" x2="19.8" y2="18"></line><line x1="4.2" y1="18" x2="19.8" y2="6"></line>',
-        'cold': '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path>',
-        'cyclone': '<path d="M12 2a10 10 0 1 0 10 10"></path><path d="M12 6a6 6 0 1 0 6 6"></path><path d="M12 10a2 2 0 1 0 2 2"></path>',
-        'fog': '<line x1="3" y1="9" x2="21" y2="9"></line><line x1="5" y1="14" x2="19" y2="14"></line><line x1="3" y1="19" x2="21" y2="19"></line>'
-    };
-    // 需要非標準 stroke 設定嘅分類（粗線 / 實心），其餘一律用標準 2px 線條
-    var ICON_SVG_ATTRS = {
-        'rain-heavy': { d: '<path d="M16 13v8"></path><path d="M8 13v8"></path><path d="M12 15v8"></path><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>', attrs: 'stroke-width="2.5"' },
-        'showers': { d: '<path d="M16 13l-3 6"></path><path d="M9 13l-3 6"></path><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>', attrs: 'stroke-width="2.2"' },
-        'hot': { d: '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path>', attrs: 'fill="#000000" stroke-width="2"' }
+        'sun-day': '<circle cx="12" cy="12" r="4.3"></circle><line x1="12" y1="1.8" x2="12" y2="3.6"></line><line x1="12" y1="20.4" x2="12" y2="22.2"></line><line x1="4.75" y1="4.75" x2="6.05" y2="6.05"></line><line x1="17.95" y1="17.95" x2="19.25" y2="19.25"></line><line x1="1.8" y1="12" x2="3.6" y2="12"></line><line x1="20.4" y1="12" x2="22.2" y2="12"></line><line x1="4.75" y1="19.25" x2="6.05" y2="17.95"></line><line x1="17.95" y1="6.05" x2="19.25" y2="4.75"></line>',
+
+        'moon-night': '<path d="M20.5 13.4A8.5 8.5 0 1 1 10.6 3.5 6.8 6.8 0 0 0 20.5 13.4Z"></path>',
+
+        'partly-day': '<circle cx="8" cy="8" r="2.6"></circle><line x1="8" y1="2.6" x2="8" y2="4"></line><line x1="3.4" y1="6.4" x2="4.5" y2="7.2"></line><line x1="12.6" y1="4.6" x2="11.5" y2="5.5"></line>' + CLOUD_EL,
+
+        'partly-night': '<path d="M10.88 6.25A2.88 2.88 0 1 1 7.75 3.12 2.24 2.24 0 0 0 10.88 6.25Z"></path>' + CLOUD_EL,
+
+        'cloudy': CLOUD_EL,
+
+        'overcast': '<g transform="translate(-4,-5) scale(0.7)"><path d="' + CLOUD + '"></path></g>' + CLOUD_EL,
+
+        'fog': '<path d="M3 8c2 -1.6 4 1.6 6 0s4 -1.6 6 0s4 1.6 6 0"></path><path d="M3 13c2 -1.6 4 1.6 6 0s4 -1.6 6 0s4 1.6 6 0"></path><path d="M3 18c2 -1.6 4 1.6 6 0s4 -1.6 6 0s4 1.6 6 0"></path>',
+
+        'rain-light': CLOUD_EL + drop(13, 21, 1, 1.7, 0),
+
+        'rain-mod': CLOUD_EL + drop(9, 21, 1, 1.7, 0) + drop(16, 21, 1, 1.7, 0),
+
+        'rain-heavy': CLOUD_EL + drop(8, 21.2, 1.1, 1.9, 0) + drop(13, 22, 1.1, 1.9, 0) + drop(18, 21.2, 1.1, 1.9, 0),
+
+        'showers': CLOUD_EL + drop(9, 21, 1, 1.7, 20) + drop(16, 21, 1, 1.7, 20),
+
+        'thunder': CLOUD_EL + '<polygon points="14,15 9,20.5 12,20.5 10.5,24 16,17.5 12.8,17.5" fill="#000000" stroke="none"></polygon>',
+
+        'snow': CLOUD_EL + dot(9, 21, 0.95) + dot(13, 22.2, 0.95) + dot(17, 21, 0.95),
+
+        'windy': '<path d="M2 8h13.5a2.5 2.5 0 1 0 -2.4 -3.2"></path><path d="M2 12.5h17a2.8 2.8 0 1 1 -2.7 3.6"></path><path d="M2 17h11a2 2 0 1 1 -1.9 2.6"></path>',
+
+        'hot': '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z" fill="#000000" stroke="none"></path>',
+
+        'cold': '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path>' + dot(19, 5.5, 1),
+
+        'cyclone': '<path d="M12 2.2a9.8 9.8 0 1 0 9.8 9.8"></path><path d="M12 6a6 6 0 1 0 6 6"></path><path d="M12 9.8a2.2 2.2 0 1 0 2.2 2.2"></path>'
     };
 
     function renderIconCategory(category) {
-        var S = '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">';
+        var S = '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">';
         var E = '</svg>';
-        if (ICON_SVG_ATTRS[category]) {
-            var spec = ICON_SVG_ATTRS[category];
-            return '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" ' + spec.attrs + '>' + spec.d + '</svg>';
-        }
         return S + (ICON_SVG[category] || ICON_SVG['cloudy']) + E;
     }
 
@@ -257,7 +286,8 @@
         if (n >= 70 && n <= 75) return 'moon-night';
         if (n === 52 || n === 53 || n === 54) return 'partly-day';
         if (n === 76 || n === 77) return 'partly-night';
-        if (n === 60 || n === 61) return 'cloudy';
+        if (n === 60) return 'cloudy';
+        if (n === 61) return 'overcast';
         if (n === 62) return 'rain-light';
         if (n === 63) return 'rain-mod';
         if (n === 64) return 'rain-heavy';
@@ -281,7 +311,7 @@
         var day = isDay !== 0;
         if (n === 0 || n === 1) return day ? 'sun-day' : 'moon-night';
         if (n === 2) return day ? 'partly-day' : 'partly-night';
-        if (n === 3) return 'cloudy';
+        if (n === 3) return 'overcast';
         if (n === 45 || n === 48) return 'fog';
         if (n === 51 || n === 53 || n === 56) return 'rain-light';
         if (n === 55 || n === 57 || n === 66) return 'rain-mod';
