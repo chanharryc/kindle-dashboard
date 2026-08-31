@@ -5,16 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kindle 資訊面板</title>
     <style>
-        /* ===== Web 1.0 究極相容性 CSS (Table 佈局) ===== */
+        /* ===== 終極防捲軸 CSS ===== */
         html, body {
             width: 100%;
-            height: 100%;
+            height: 95vh; /* 大幅縮減總高度，確保絕對不出現捲軸 */
             margin: 0;
             padding: 0;
-            overflow: hidden; 
+            overflow: hidden !important; 
             background-color: #ffffff;
             color: #000000;
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         * {
@@ -29,26 +31,16 @@
             width: 100%;
             height: 100%;
             display: table;
-            table-layout: fixed; /* 固定寬度，防止內容撐破 */
+            table-layout: fixed;
         }
 
         /* ===== 行設定 ===== */
-        .row {
-            display: table-row;
-        }
-
-        /* 第一行：時間與現在天氣 (佔高度較小) */
-        .row-top { height: 20%; }
+        .row { display: table-row; }
         
-        /* 第二行：巴士 (佔高度最大) */
+        .row-top { height: 25%; }
         .row-bus { height: 35%; }
-        
-        /* 第三行：每小時預報 */
-        .row-hourly { height: 20%; }
-        
-        /* 第四行：四日預報 */
-        .row-bottom { height: 25%; }
-
+        .row-hourly { height: 20%; } /* 確保這行有足夠高度 */
+        .row-bottom { height: 20%; }
 
         /* ===== 列與儲存格設定 ===== */
         .cell {
@@ -58,47 +50,41 @@
             border-bottom: 4px solid #000000;
         }
 
-        /* 移除最後一行的下邊框 */
         .row-bottom .cell { border-bottom: none; }
-
-        /* 垂直分隔線 */
         .border-right { border-right: 4px solid #000000; }
         .border-right-dashed { border-right: 2px dashed #000000; }
 
         /* ===== 內部佈局微調 ===== */
-        .bus-container {
-            position: relative;
-            height: 100%;
-        }
-        .bus-top { position: absolute; top: 10px; left: 0; width: 100%; text-align: center; }
+        .bus-container { position: relative; height: 100%; }
+        .bus-top { position: absolute; top: 5px; left: 0; width: 100%; text-align: center; }
         .bus-mid { position: absolute; top: 50%; left: 0; width: 100%; -webkit-transform: translateY(-50%); transform: translateY(-50%); text-align: center; }
-        .bus-bot { position: absolute; bottom: 10px; left: 0; width: 100%; text-align: center; }
-
+        .bus-bot { position: absolute; bottom: 5px; left: 0; width: 100%; text-align: center; }
 
         /* ===== 內部文字與 SVG 排版 ===== */
-        .time-main { font-size: 4.5rem; font-weight: bold; line-height: 1; margin-bottom: 5px; }
-        .date-main { font-size: 1.2rem; font-weight: bold; }
+        .time-main { font-size: 4rem; font-weight: bold; line-height: 1; margin-bottom: 5px; }
+        .date-main { font-size: 1.1rem; font-weight: bold; }
         
-        .w-icon { width: 75px; height: 75px; display: inline-block; }
-        .w-temp { font-size: 3rem; font-weight: bold; line-height: 1; display: block;}
+        .w-icon { width: 70px; height: 70px; display: inline-block; }
+        .w-temp { font-size: 2.5rem; font-weight: bold; line-height: 1; display: block;}
         
-        .bus-title { font-size: 1.5rem; font-weight: bold; border-bottom: 2px solid #000000; padding-bottom: 2px; margin: 0 15px 5px 15px;}
+        .bus-title { font-size: 1.4rem; font-weight: bold; border-bottom: 2px solid #000000; padding-bottom: 2px; margin: 0 10px 5px 10px;}
         .bus-route { font-size: 1rem; font-weight: bold; }
         .bus-tag { display: inline-block; font-size: 0.8rem; border: 1px solid #000000; border-radius: 8px; padding: 1px 6px; margin-top: 3px;}
-        .eta-main { font-size: 2.8rem; font-weight: bold; line-height: 1; margin-bottom: 5px; }
-        .eta-sub { font-size: 1.1rem; font-weight: bold; line-height: 1.2; }
-        .eta-sub-small { font-size: 0.9rem; }
-        .eta-update { font-size: 0.8rem; color: #333; }
+        .eta-main { font-size: 2.5rem; font-weight: bold; line-height: 1; margin-bottom: 5px; }
+        .eta-sub { font-size: 1rem; font-weight: bold; line-height: 1.2; }
+        .eta-sub-small { font-size: 0.85rem; }
+        .eta-update { font-size: 0.75rem; color: #333; }
 
-        .h-time { font-size: 1.1rem; font-weight: bold; margin-bottom: 5px; }
-        .h-icon { width: 45px; height: 45px; display: inline-block; }
-        .h-temp { font-size: 1.2rem; font-weight: bold; margin-top: 2px; }
+        /* 每小時天氣縮小字體以容納 6 格 */
+        .h-time { font-size: 0.9rem; font-weight: bold; margin-bottom: 2px; }
+        .h-icon { width: 35px; height: 35px; display: inline-block; }
+        .h-temp { font-size: 1rem; font-weight: bold; margin-top: 2px; }
 
-        .f-date { font-size: 1.2rem; font-weight: bold; line-height: 1.2; }
-        .f-week { font-size: 1rem; font-weight: bold; line-height: 1.2; }
-        .f-icon { width: 55px; height: 55px; display: inline-block; margin: 5px 0; }
-        .f-temp { font-size: 1.3rem; font-weight: bold; }
-        .f-rh { font-size: 1rem; font-weight: bold; margin-top: 2px; }
+        .f-date { font-size: 1rem; font-weight: bold; line-height: 1.2; }
+        .f-week { font-size: 0.9rem; font-weight: bold; line-height: 1.2; }
+        .f-icon { width: 45px; height: 45px; display: inline-block; margin: 3px 0; }
+        .f-temp { font-size: 1.1rem; font-weight: bold; }
+        .f-rh { font-size: 0.9rem; font-weight: bold; margin-top: 2px; }
 
     </style>
 </head>
@@ -106,7 +92,7 @@
 
 <div class="dashboard">
 
-    <!-- 1. 上方：時間與現在天氣 -->
+    <!-- 1. 上方 -->
     <div class="row row-top">
         <div class="cell border-right" style="width: 50%;">
             <div class="time-main" id="local-time">--:--</div>
@@ -117,7 +103,7 @@
         </div>
     </div>
 
-    <!-- 2. 中間：巴士 (使用內部絕對定位來保證三段對齊) -->
+    <!-- 2. 中間 -->
     <div class="row row-bus">
         <div class="cell border-right" style="width: 50%; height: 100%;">
             <div class="bus-container">
@@ -143,33 +129,30 @@
         </div>
     </div>
 
-    <!-- 3. 新增：未來數小時推算天氣 -->
+    <!-- 3. 未來 6 小時天氣 -->
     <div class="row row-hourly" id="hourly-container">
-        <!-- JS 動態生成 6 個格仔 (為確保安全，這裡先寫死 HTML 結構) -->
-        <div class="cell border-right-dashed" id="h-1">載入中...</div>
-        <div class="cell border-right-dashed" id="h-2"></div>
-        <div class="cell border-right-dashed" id="h-3"></div>
-        <div class="cell border-right-dashed" id="h-4"></div>
-        <div class="cell border-right-dashed" id="h-5"></div>
-        <div class="cell" id="h-6"></div>
+        <div class="cell border-right-dashed" style="width: 16.6%;" id="h-1">載入中...</div>
+        <div class="cell border-right-dashed" style="width: 16.6%;" id="h-2"></div>
+        <div class="cell border-right-dashed" style="width: 16.6%;" id="h-3"></div>
+        <div class="cell border-right-dashed" style="width: 16.6%;" id="h-4"></div>
+        <div class="cell border-right-dashed" style="width: 16.6%;" id="h-5"></div>
+        <div class="cell" style="width: 17%;" id="h-6"></div>
     </div>
 
-    <!-- 4. 下方：四日天氣預報 -->
+    <!-- 4. 四日預報 -->
     <div class="row row-bottom" id="forecast-container">
-        <div class="cell border-right-dashed" id="f-1">載入預報中...</div>
-        <div class="cell border-right-dashed" id="f-2"></div>
-        <div class="cell border-right-dashed" id="f-3"></div>
-        <div class="cell" id="f-4"></div>
+        <div class="cell border-right-dashed" style="width: 25%;" id="f-1">載入預報中...</div>
+        <div class="cell border-right-dashed" style="width: 25%;" id="f-2"></div>
+        <div class="cell border-right-dashed" style="width: 25%;" id="f-3"></div>
+        <div class="cell" style="width: 25%;" id="f-4"></div>
     </div>
 
 </div>
 
 <script>
-    // ===== 全局變數 =====
     var isPublicHoliday = false;
     var currentNetTimeMs = 0; 
     var timeSyncTimer = null;
-    
     var currentTempC = null;
     var currentIconId = null;
 
@@ -214,13 +197,8 @@
         return '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>';
     }
 
-    // ===== 網路時間 (安全降級版，不用 HEAD 標頭) =====
-    // 之前可能因為 Github Pages 阻擋 HEAD 請求而卡死，這次改用更傳統的 Timeout 機制
     function syncNetworkTime() {
-        // 直接使用系統時間作為基準，避免複雜的網路請求導致崩潰
-        // 因為之前你提到時間其實正常了，代表 Kindle 系統時間大致可用
-        // 為了安全，我們退回依賴本機時間的方案，確保畫面能顯示
-        currentNetTimeMs = new Date().getTime();
+        currentNetTimeMs = new Date().getTime(); // 簡化時間獲取，避免卡死
         startInternalClock();
     }
 
@@ -241,7 +219,7 @@
     function renderClock() {
         if(currentNetTimeMs === 0) return;
         var hkDate = getAccurateHKDate();
-        var h = pad(hkDate.getHours()); // 降級：使用本機時區
+        var h = pad(hkDate.getHours());
         var m = pad(hkDate.getMinutes());
         var mon = hkDate.getMonth() + 1;
         var day = hkDate.getDate();
@@ -250,7 +228,6 @@
         document.getElementById('local-date').innerText = mon + '/' + day + ' (' + weekMap[hkDate.getDay()] + ')' + (isPublicHoliday ? ' 紅日' : '');
     }
 
-    // ===== 巴士邏輯 =====
     function checkPublicHoliday() {
         var hkDate = getAccurateHKDate();
         var y = hkDate.getFullYear();
@@ -311,7 +288,6 @@
     }
 
     function updateKMB() {
-        // 使用更安全的 try-catch 包覆，並改寫 ETA 擷取邏輯，避開複雜字串操作
         fetchJSON('https://data.etabus.gov.hk/v1/transport/kmb/eta/277DEAAFCFFCD64C/234B/1', function(err, etaData) {
             var hkDate = getAccurateHKDate();
             var updateTimeStr = pad(hkDate.getHours()) + ':' + pad(hkDate.getMinutes());
@@ -327,19 +303,11 @@
                 for(var i=0; i<etaData.data.length; i++) {
                     var d = etaData.data[i];
                     if (d.dir === 'O' && d.eta !== null) {
-                        // 放棄截取字串，直接依賴瀏覽器的 Date.parse()，對舊版瀏覽器較寬容
-                        // eta 格式: "2023-11-09T17:09:25+08:00"
                         var etaTime = new Date(d.eta).getTime();
-                        
                         if(!isNaN(etaTime)) {
-                            // 計算相差分鐘數，不再處理跨日問題，單純計算時間差
                             var diffMs = etaTime - nowTimeMs;
                             var diffMins = Math.round(diffMs / 60000);
-                            
-                            // 只顯示大於等於 0 的時間
-                            if (diffMins >= 0) {
-                                etas.push(diffMins);
-                            }
+                            if (diffMins >= 0) etas.push(diffMins);
                         }
                     }
                 }
@@ -358,15 +326,13 @@
                     document.getElementById('kmb-mid').innerHTML = '<div class="eta-main">暫無班次</div>'; 
                 }
             } catch (e) {
-                // 如果有任何異常，顯示錯誤訊息，避免卡在「載入中」
-                document.getElementById('kmb-mid').innerHTML = '<div class="eta-main" style="font-size: 2rem;">API 異常</div>';
+                document.getElementById('kmb-mid').innerHTML = '<div class="eta-main" style="font-size: 1.5rem;">API 異常</div>';
             }
             
             document.getElementById('kmb-bot').innerHTML = '<div class="eta-update">更新: ' + updateTimeStr + '</div>';
         });
     }
 
-    // ===== 天氣邏輯 (包含每小時預測) =====
     function generateHourlyForecast() {
         if (currentTempC === null || currentIconId === null) return;
         var hkDate = getAccurateHKDate();
@@ -396,7 +362,6 @@
     }
 
     function updateWeather() {
-        // 1. 現在天氣
         fetchJSON('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc', function(err, curData) {
             if(!err && curData) {
                 if(curData.temperature && curData.temperature.data) {
@@ -412,7 +377,6 @@
             }
         });
 
-        // 2. 四日天氣預報 (修改為填入寫死的 Table Cell)
         fetchJSON('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=tc', function(err, fndData) {
             if(!err && fndData && fndData.weatherForecast) {
                 var maxDays = Math.min(4, fndData.weatherForecast.length);
