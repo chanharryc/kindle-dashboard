@@ -7,8 +7,9 @@
     <style>
         /* ===== Web 1.0 究極相容性 CSS ===== */
         html, body {
+            /* 縮減至 98% 避免觸發邊界導致捲軸 */
             width: 100%;
-            height: 100%;
+            height: 98%; 
             margin: 0;
             padding: 0;
             overflow: hidden; 
@@ -31,13 +32,14 @@
             position: relative;
         }
 
-        /* ===== 區塊絕對定位切割 ===== */
+        /* ===== 區塊絕對定位切割 (加入 8 小時天氣，調整比例) ===== */
+        /* 上方時鐘與現今天氣: 20% */
         .row-top {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 25%;
+            height: 20%;
             border-bottom: 4px solid #000000;
         }
         
@@ -58,12 +60,13 @@
             height: 100%;
         }
 
+        /* 中間巴士: 35% (縮減高度) */
         .row-mid {
             position: absolute;
-            top: 25%;
+            top: 20%;
             left: 0;
             width: 100%;
-            height: 50%;
+            height: 35%;
             border-bottom: 4px solid #000000;
         }
         
@@ -81,6 +84,40 @@
             right: 0;
         }
 
+        /* 未來數小時預報: 20% */
+        .row-hourly {
+            position: absolute;
+            top: 55%;
+            left: 0;
+            width: 100%;
+            height: 20%;
+            border-bottom: 4px solid #000000;
+        }
+
+        .hourly-title {
+            position: absolute;
+            top: 5px;
+            left: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-bottom: 2px solid #000000;
+            padding-bottom: 2px;
+        }
+
+        .hourly-content {
+            position: absolute;
+            top: 40px;
+            left: 10px;
+            right: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            line-height: 1.4;
+            /* 避免文字過多撐破版面 */
+            overflow: hidden;
+            height: 60px;
+        }
+
+        /* 下方 4 天天氣: 25% */
         .row-bottom {
             position: absolute;
             top: 75%;
@@ -115,7 +152,7 @@
 
         .bus-top {
             position: absolute;
-            top: 15px;
+            top: 5px;
             left: 0;
             width: 100%;
             text-align: center;
@@ -131,36 +168,35 @@
         }
         .bus-bot {
             position: absolute;
-            bottom: 15px;
+            bottom: 5px;
             left: 0;
             width: 100%;
             text-align: center;
         }
 
 
-        /* ===== 內部文字排版 (已放大字體及 SVG 圖示) ===== */
-        .time-main { font-size: 4.8rem; font-weight: bold; line-height: 1; margin-bottom: 8px; }
-        .date-main { font-size: 1.3rem; font-weight: bold; }
+        /* ===== 內部文字排版 ===== */
+        .time-main { font-size: 4rem; font-weight: bold; line-height: 1; margin-bottom: 4px; }
+        .date-main { font-size: 1.2rem; font-weight: bold; }
         
-        /* 棄用圖片，改用 SVG，設定尺寸及間距 */
-        .w-icon { width: 90px; height: 90px; display: inline-block; margin-bottom: 10px; }
-        .w-temp { font-size: 3.5rem; font-weight: bold; line-height: 1; display: block;}
+        .w-icon { width: 70px; height: 70px; display: inline-block; margin-bottom: 5px; }
+        .w-temp { font-size: 3rem; font-weight: bold; line-height: 1; display: block;}
         
-        .bus-title { font-size: 1.6rem; font-weight: bold; border-bottom: 2px solid #000000; padding-bottom: 4px; margin: 0 15px 5px 15px;}
-        .bus-route { font-size: 1.1rem; font-weight: bold; }
-        .bus-tag { display: inline-block; font-size: 0.9rem; border: 1px solid #000000; border-radius: 10px; padding: 2px 8px; margin-top: 5px;}
+        .bus-title { font-size: 1.4rem; font-weight: bold; border-bottom: 2px solid #000000; padding-bottom: 2px; margin: 0 10px 2px 10px;}
+        .bus-route { font-size: 1rem; font-weight: bold; }
+        .bus-tag { display: inline-block; font-size: 0.8rem; border: 1px solid #000000; border-radius: 8px; padding: 1px 6px; margin-top: 2px;}
         
-        .eta-main { font-size: 3rem; font-weight: bold; line-height: 1.1; margin-bottom: 5px; }
-        .eta-sub { font-size: 1.1rem; font-weight: bold; line-height: 1.3; }
-        .eta-sub-small { font-size: 0.95rem; }
-        .eta-update { font-size: 0.85rem; color: #333; }
+        /* 巴士資訊稍微縮小適應較矮空間 */
+        .eta-main { font-size: 2.6rem; font-weight: bold; line-height: 1.1; margin-bottom: 2px; }
+        .eta-sub { font-size: 1rem; font-weight: bold; line-height: 1.2; }
+        .eta-sub-small { font-size: 0.9rem; }
+        .eta-update { font-size: 0.8rem; color: #333; }
 
-        /* 四日預報加大字體 */
-        .f-date { font-size: 1.3rem; font-weight: bold; line-height: 1.2; }
-        .f-week { font-size: 1.15rem; font-weight: bold; line-height: 1.2; }
-        .f-icon { width: 65px; height: 65px; display: inline-block; margin: 10px 0; }
-        .f-temp { font-size: 1.4rem; font-weight: bold; }
-        .f-rh { font-size: 1.1rem; font-weight: bold; margin-top: 3px; }
+        .f-date { font-size: 1.2rem; font-weight: bold; line-height: 1.2; }
+        .f-week { font-size: 1rem; font-weight: bold; line-height: 1.2; }
+        .f-icon { width: 55px; height: 55px; display: inline-block; margin: 5px 0; }
+        .f-temp { font-size: 1.2rem; font-weight: bold; }
+        .f-rh { font-size: 1rem; font-weight: bold; margin-top: 2px; }
 
     </style>
 </head>
@@ -210,6 +246,13 @@
         </div>
     </div>
 
+    <div class="row-hourly">
+        <div class="hourly-title">本港天氣預測</div>
+        <div class="hourly-content" id="hourly-forecast">
+            載入預測中...
+        </div>
+    </div>
+
     <div class="row-bottom" id="forecast-container">
         <!-- JS 將自動填入預報區塊 -->
     </div>
@@ -248,7 +291,6 @@
         xhr.send();
     }
 
-    // ===== 穩定版時間同步機制 =====
     function syncNetworkTime() {
         var xhr = new XMLHttpRequest();
         var url = window.location.href.split('#')[0];
@@ -445,26 +487,31 @@
         });
     }
 
-    // ===== 全新 E-ink 專用高對比 SVG 圖示生成器 =====
+    // SVG 圖示生成器 (支援區分大小雨)
     function getSvgIcon(iconNumberStr) {
         var n = parseInt(iconNumberStr, 10);
         // 天晴 (50, 51)
         if (n === 50 || n === 51) {
             return '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>';
         }
-        // 下雨 (53, 54, 62, 63, 64, 80-85)
-        if ((n >= 53 && n <= 54) || (n >= 62 && n <= 64) || (n >= 80 && n <= 85)) {
+        // 微雨/細雨 (53, 54, 80)
+        if (n === 53 || n === 54 || n === 80) {
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 15v4"></path><path d="M10 17v2"></path><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path></svg>';
+        }
+        // 大雨/豪雨 (62, 63, 64, 81-85)
+        if ((n >= 62 && n <= 64) || (n >= 81 && n <= 85)) {
             return '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 13v8"></path><path d="M8 13v8"></path><path d="M12 15v8"></path><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path></svg>';
         }
         // 雷暴 (65, 70-76)
         if (n === 65 || (n >= 70 && n <= 76)) {
             return '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"></path><polyline points="13 11 9 17 15 17 11 23"></polyline></svg>';
         }
-        // 預設: 多雲/陰天 (52, 60, 61, 其他)
+        // 多雲/陰天 (52, 60, 61)
         return '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>';
     }
 
     function updateWeather() {
+        // 現在天氣
         fetchJSON('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc', function(err, curData) {
             if(!err && curData) {
                 var temp = '--';
@@ -473,13 +520,24 @@
                 }
                 var iconNum = curData.icon ? curData.icon[0] : '60';
                 
-                // 改用 SVG 繪製
                 var html = '<div class="w-icon">' + getSvgIcon(iconNum) + '</div><br>';
                 html += '<span class="w-temp">' + temp + '°C</span>';
                 document.getElementById('current-weather').innerHTML = html;
             }
         });
 
+        // 局部地區天氣預報 (代替未來的時晴預測，因為這能提供概括性的文字描述)
+        fetchJSON('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=flw&lang=tc', function(err, flwData) {
+             if(!err && flwData) {
+                 // flwData 會包含一段概括本港今日的文字描述
+                 var text = flwData.forecastDesc || "暫時未有詳細天氣預測。";
+                 // 限制文字長度，避免撐破版面，只顯示第一句
+                 var shortText = text.split('。')[0] + '。';
+                 document.getElementById('hourly-forecast').innerText = shortText;
+             }
+        });
+
+        // 四日預報
         fetchJSON('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=tc', function(err, fndData) {
             if(!err && fndData && fndData.weatherForecast) {
                 var html = '';
@@ -492,10 +550,7 @@
                     html += '<div class="center-vertical">';
                     html += '<div class="f-date">' + dateStr + '</div>';
                     html += '<div class="f-week">(' + day.week + ')</div>';
-                    
-                    // 底部預報同樣改用 SVG 繪製
                     html += '<div class="f-icon">' + getSvgIcon(day.ForecastIcon) + '</div>';
-                    
                     html += '<div class="f-temp">' + day.forecastMintemp.value + '°- ' + day.forecastMaxtemp.value + '°</div>';
                     html += '<div class="f-rh">' + day.forecastMinrh.value + '%-' + day.forecastMaxrh.value + '%</div>';
                     html += '</div></div>';
