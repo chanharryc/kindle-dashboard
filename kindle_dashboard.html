@@ -55,6 +55,9 @@
         }
 
         .row-bottom .cell { border-bottom: none; }
+        /* 兩個天氣預報列（未來6小時 / 未來4日）視覺上歸為同一組，改用虛線分隔，
+           與「現況」區塊之間的實線區隔開 */
+        .row-hourly .cell { border-bottom: 2px dashed #000000; }
         .border-right { border-right: 4px solid #000000; }
         .border-right-dashed { border-right: 2px dashed #000000; }
 
@@ -70,7 +73,9 @@
         
         .w-icon { width: 70px; height: 70px; display: inline-block; }
         .w-temp { font-size: 2.5rem; font-weight: bold; line-height: 1; display: block;}
-        
+        .w-desc { font-size: 0.95rem; font-weight: bold; margin-top: 6px; letter-spacing: 0.5px; }
+
+        .bus-icon { width: 22px; height: 22px; display: inline-block; vertical-align: -6px; margin-right: 5px; }
         .bus-title { font-size: 1.4rem; font-weight: bold; border-bottom: 2px solid #000000; padding-bottom: 2px; margin: 0 10px 5px 10px;}
         .bus-route { font-size: 1rem; font-weight: bold; }
         .bus-tag { display: inline-block; font-size: 0.8rem; border: 1px solid #000000; border-radius: 8px; padding: 1px 6px; margin-top: 3px;}
@@ -112,7 +117,7 @@
         <div class="cell border-right" style="width: 50%; height: 100%;">
             <div class="bus-container">
                 <div class="bus-top">
-                    <div class="bus-title">九巴 234B</div>
+                    <div class="bus-title"><span class="bus-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line><line x1="7" y1="16" x2="7" y2="19"></line><line x1="17" y1="16" x2="17" y2="19"></line><circle cx="7" cy="19" r="1.3" fill="#000000"></circle><circle cx="17" cy="19" r="1.3" fill="#000000"></circle></svg></span>九巴 234B</div>
                     <div class="bus-route">油柑頭 ➔ 荃灣西</div>
                 </div>
                 <div class="bus-mid" id="kmb-mid">載入中...</div>
@@ -123,7 +128,7 @@
         <div class="cell" style="width: 50%; height: 100%;">
             <div class="bus-container">
                 <div class="bus-top">
-                    <div class="bus-title">恆麗園村巴</div>
+                    <div class="bus-title"><span class="bus-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line><line x1="7" y1="16" x2="7" y2="19"></line><line x1="17" y1="16" x2="17" y2="19"></line><circle cx="7" cy="19" r="1.3" fill="#000000"></circle><circle cx="17" cy="19" r="1.3" fill="#000000"></circle></svg></span>恆麗園村巴</div>
                     <div class="bus-route">往 荃灣</div>
                     <div id="shuttle-tag-container"></div>
                 </div>
@@ -184,21 +189,93 @@
         xhr.send();
     }
 
+    /* HKO 天氣圖示代碼對照（日/夜分開處理，避免夜間「天晴」誤顯示做雷暴等錯配問題） */
     function getSvgIcon(iconNumberStr) {
         var n = parseInt(iconNumberStr, 10);
-        if (n >= 50 && n <= 52) {
-            return '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="2" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"></line><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"></line><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"></line></svg>';
+        var S = '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">';
+        var E = '</svg>';
+
+        // 晴朗 / 乾燥（日）
+        if (n === 50 || n === 51 || n === 81) {
+            return S + '<circle cx="12" cy="12" r="4"></circle><line x1="12" y1="2" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"></line><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"></line><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"></line>' + E;
         }
-        if (n === 53 || n === 54 || n === 80) {
-            return '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 13v6"></path><path d="M8 13v6"></path><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path></svg>';
+        // 天晴（夜）
+        if (n >= 70 && n <= 75) {
+            return S + '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path>' + E;
         }
-        if ((n >= 62 && n <= 64) || (n >= 81 && n <= 85)) {
+        // 短暫陽光 / 部分時間有陽光（日）
+        if (n === 52 || n === 53 || n === 54) {
+            return S + '<circle cx="9" cy="9" r="3.2"></circle><line x1="9" y1="2.5" x2="9" y2="4"></line><line x1="3.5" y1="9" x2="2" y2="9"></line><line x1="4.6" y1="4.6" x2="3.5" y2="3.5"></line><line x1="13.4" y1="4.6" x2="14.5" y2="3.5"></line><path d="M18 20H8.5a4.5 4.5 0 1 1 1.1-8.86A6 6 0 0 1 21 13.5 3.5 3.5 0 0 1 18 20Z"></path>' + E;
+        }
+        // 大致多雲（夜）
+        if (n === 76 || n === 77) {
+            return S + '<path d="M14.5 3.5a4 4 0 1 0 3 6.8"></path><path d="M18 20H8.5a4.5 4.5 0 1 1 1.1-8.86A6 6 0 0 1 21 13.5 3.5 3.5 0 0 1 18 20Z"></path>' + E;
+        }
+        // 多雲 / 密雲
+        if (n === 60 || n === 61) {
+            return S + '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>' + E;
+        }
+        // 微雨 / 雨
+        if (n === 62 || n === 63) {
+            return S + '<path d="M16 13v6"></path><path d="M8 13v6"></path><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path>' + E;
+        }
+        // 大雨 / 驟雨
+        if (n === 64 || n === 82) {
             return '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 13v8"></path><path d="M8 13v8"></path><path d="M12 15v8"></path><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path></svg>';
         }
-        if (n === 65 || (n >= 70 && n <= 76)) {
-            return '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"></path><polyline points="13 11 9 17 15 17 11 23"></polyline></svg>';
+        // 雷暴
+        if (n === 65) {
+            return S + '<path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"></path><polyline points="13 11 9 17 15 17 11 23"></polyline>' + E;
         }
-        return '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>';
+        // 大風
+        if (n === 80) {
+            return S + '<path d="M9.59 4.59A2 2 0 1 1 11 8H2"></path><path d="M12.59 19.41A2 2 0 1 0 14 16H2"></path><path d="M17.73 7.73A2.5 2.5 0 1 1 19.5 12H2"></path>' + E;
+        }
+        // 雨夾雪 / 降雪
+        if (n === 83 || n === 84 || n === 85) {
+            return S + '<line x1="12" y1="2" x2="12" y2="22"></line><line x1="4.2" y1="6" x2="19.8" y2="18"></line><line x1="4.2" y1="18" x2="19.8" y2="6"></line>' + E;
+        }
+        // 酷熱（以實心溫度計區分）
+        if (n === 90) {
+            return '<svg viewBox="0 0 24 24" fill="#000000" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path></svg>';
+        }
+        // 寒冷（空心溫度計區分）
+        if (n === 91) {
+            return S + '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path>' + E;
+        }
+        // 熱帶氣旋警告
+        if (n === 92) {
+            return S + '<path d="M12 2a10 10 0 1 0 10 10"></path><path d="M12 6a6 6 0 1 0 6 6"></path><path d="M12 10a2 2 0 1 0 2 2"></path>' + E;
+        }
+        // 預設：多雲
+        return S + '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>' + E;
+    }
+
+    function getWeatherDesc(iconNumberStr) {
+        var map = {
+            50: '晴朗', 51: '大致天晴', 52: '短暫陽光有驟雨', 53: '部分時間有陽光',
+            54: '部分時間有陽光有驟雨', 60: '多雲', 61: '密雲', 62: '微雨', 63: '有雨',
+            64: '大雨', 65: '雷暴', 70: '天晴', 71: '天晴', 72: '天晴', 73: '天晴',
+            74: '天晴', 75: '天晴', 76: '大致多雲', 77: '大致多雲', 80: '大風',
+            81: '乾燥', 82: '驟雨', 83: '雨夾雪', 84: '降雪', 85: '降雪',
+            90: '酷熱', 91: '寒冷', 92: '熱帶氣旋', 93: '火災危險'
+        };
+        return map[parseInt(iconNumberStr, 10)] || '多雲';
+    }
+
+    /* 將現時天氣圖示代碼，依推算時段是日/夜校正（僅用於推算的未來 6 小時，
+       避免例如日間「晴朗」的太陽圖示，被套用到凌晨時段） */
+    function nightAdjustedIcon(baseCode, hour) {
+        var n = parseInt(baseCode, 10);
+        var isNight = (hour >= 19 || hour < 6);
+        if (isNight) {
+            if (n === 50 || n === 51) return 71;
+            if (n === 52 || n === 53 || n === 54) return 76;
+        } else {
+            if (n >= 70 && n <= 75) return 51;
+            if (n === 76 || n === 77) return 53;
+        }
+        return n;
     }
 
     function syncNetworkTime() {
@@ -357,7 +434,7 @@
             var expectedTemp = parseInt(currentTempC, 10) + tempOffset + randomShift;
 
             var html = '<div class="h-time">' + timeLabel + '</div>';
-            html += '<div class="h-icon">' + getSvgIcon(currentIconId) + '</div>';
+            html += '<div class="h-icon">' + getSvgIcon(nightAdjustedIcon(currentIconId, forecastH)) + '</div>';
             html += '<div class="h-temp">' + expectedTemp + '°</div>';
             
             var cellId = 'h-' + i;
@@ -375,9 +452,12 @@
                     currentTempC = curData.temperature.data[1] ? curData.temperature.data[1].value : curData.temperature.data[0].value;
                 }
                 currentIconId = curData.icon ? curData.icon[0] : '60';
-                
-                var html = '<div class="w-icon">' + getSvgIcon(currentIconId) + '</div><br>';
+
+                var humidity = (curData.humidity && curData.humidity.data && curData.humidity.data[0]) ? curData.humidity.data[0].value : null;
+
+                var html = '<div class="w-icon">' + getSvgIcon(currentIconId) + '</div>';
                 html += '<span class="w-temp">' + currentTempC + '°C</span>';
+                html += '<div class="w-desc">' + getWeatherDesc(currentIconId) + (humidity !== null ? ' · 濕度 ' + humidity + '%' : '') + '</div>';
                 document.getElementById('current-weather').innerHTML = html;
 
                 generateHourlyForecast();
