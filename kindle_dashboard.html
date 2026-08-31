@@ -84,16 +84,15 @@
         .eta-sub-small { font-size: 0.85rem; }
         .eta-update { font-size: 0.75rem; color: #333; }
 
-        /* 每小時天氣縮小字體以容納 6 格 */
-        .h-time { font-size: 0.9rem; font-weight: bold; margin-bottom: 2px; }
-        .h-icon { width: 35px; height: 35px; display: inline-block; }
-        .h-temp { font-size: 1rem; font-weight: bold; margin-top: 2px; }
+        /* 每小時天氣：盡量放大內容，減少留白 */
+        .h-time { font-size: 1.25rem; font-weight: bold; margin-bottom: 6px; }
+        .h-icon { width: 72px; height: 72px; display: inline-block; }
+        .h-temp { font-size: 1.5rem; font-weight: bold; margin-top: 6px; }
 
-        .f-date { font-size: 1rem; font-weight: bold; line-height: 1.2; }
-        .f-week { font-size: 0.9rem; font-weight: bold; line-height: 1.2; }
-        .f-icon { width: 45px; height: 45px; display: inline-block; margin: 3px 0; }
-        .f-temp { font-size: 1.1rem; font-weight: bold; }
-        .f-rh { font-size: 0.9rem; font-weight: bold; margin-top: 2px; }
+        .f-date { font-size: 1.3rem; font-weight: bold; line-height: 1.2; }
+        .f-icon { width: 62px; height: 62px; display: inline-block; margin: 5px 0; }
+        .f-temp { font-size: 1.3rem; font-weight: bold; text-align: center; }
+        .f-rh { font-size: 1rem; font-weight: bold; margin-top: 4px; text-align: center; }
 
     </style>
 </head>
@@ -164,6 +163,7 @@
     var timeSyncTimer = null;
     var currentTempC = null;
     var currentIconId = null;
+    var weekAbbrEN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     var shuttleSchedule = {
         monFri: ["06:30", "06:55", "07:10", "07:25", "07:35", "07:50", "08:00", "08:15", "08:30", "08:45", "09:00", "09:15", "09:30", "10:00", "10:40", "11:20", "12:00", "12:30", "13:00", "13:40", "14:20", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "17:45", "18:00", "18:15", "18:30", "18:45", "19:00", "19:15", "19:30", "19:50", "20:15", "20:45", "21:15", "21:45", "22:15", "22:45"],
@@ -304,9 +304,8 @@
         var m = pad(hkDate.getMinutes());
         var mon = hkDate.getMonth() + 1;
         var day = hkDate.getDate();
-        var weekMap = ['日','一','二','三','四','五','六'];
         document.getElementById('local-time').innerText = h + ':' + m;
-        document.getElementById('local-date').innerText = mon + '/' + day + ' (' + weekMap[hkDate.getDay()] + ')' + (isPublicHoliday ? ' 紅日' : '');
+        document.getElementById('local-date').innerText = day + '/' + mon + ' ' + weekAbbrEN[hkDate.getDay()] + (isPublicHoliday ? ' 紅日' : '');
     }
 
     function checkPublicHoliday() {
@@ -469,10 +468,13 @@
                 var maxDays = Math.min(4, fndData.weatherForecast.length);
                 for(var i=0; i<maxDays; i++) {
                     var day = fndData.weatherForecast[i];
-                    var dateStr = day.forecastDate.substring(4,6) + '/' + day.forecastDate.substring(6,8);
-                    
+                    var fY = parseInt(day.forecastDate.substring(0,4), 10);
+                    var fM = parseInt(day.forecastDate.substring(4,6), 10);
+                    var fD = parseInt(day.forecastDate.substring(6,8), 10);
+                    var fWeekday = weekAbbrEN[new Date(fY, fM - 1, fD).getDay()];
+                    var dateStr = fD + '/' + fM + ' ' + fWeekday;
+
                     var html = '<div class="f-date">' + dateStr + '</div>';
-                    html += '<div class="f-week">(' + day.week + ')</div>';
                     html += '<div class="f-icon">' + getSvgIcon(day.ForecastIcon) + '</div>';
                     html += '<div class="f-temp">' + day.forecastMintemp.value + '°- ' + day.forecastMaxtemp.value + '°</div>';
                     html += '<div class="f-rh">' + day.forecastMinrh.value + '%-' + day.forecastMaxrh.value + '%</div>';
