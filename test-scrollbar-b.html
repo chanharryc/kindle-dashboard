@@ -14,29 +14,17 @@
         background-color: #ffffff;
         color: #000000;
         font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
-    html::-webkit-scrollbar, body::-webkit-scrollbar {
-        width: 0 !important;
-        height: 0 !important;
-        display: none !important;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     .box { padding: 16px; }
     .title { font-size: 1.6rem; font-weight: bold; border-bottom: 3px solid #000; padding-bottom: 8px; margin-bottom: 12px; }
-    .line { font-size: 1.2rem; font-weight: bold; padding: 10px 0; border-bottom: 1px dashed #000; }
-    .marker { font-size: 1.4rem; font-weight: bold; padding: 20px 0; text-align: center; border: 3px solid #000; margin-top: 10px; }
-    .spacer { height: 3000px; background: repeating-linear-gradient(0deg, #000 0 2px, #fff 2px 40px); }
+    .line { font-size: 1.2rem; font-weight: bold; padding: 6px 0; }
 </style>
 </head>
 <body>
 <div class="box">
-    <div class="title">測試 B：加咗隱藏捲軸 CSS（同主頁面而家一樣）</div>
-    <div class="line">呢頁刻意整到內容大幅高過畫面（同測試 A 一樣加咗 3000px 色塊）</div>
-    <div class="line">加咗 ::-webkit-scrollbar{display:none} 等 CSS</div>
-    <div class="spacer"></div>
-    <div class="marker">如果你見到呢個框，代表個頁面捲動咗</div>
+    <div class="title">測試 B：內容只得 1 行，完全裝得落畫面</div>
+    <div class="line">得呢一行字，冇溢出</div>
 </div>
 </body>
 </html>
