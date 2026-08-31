@@ -11,12 +11,21 @@
             height: 100%; /* 捨棄 vh，改回最穩定的 100% */
             margin: 0;
             padding: 0;
-            overflow: hidden !important; 
+            overflow: hidden !important;
             background-color: #ffffff;
             color: #000000;
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
             -webkit-user-select: none;
             user-select: none;
+            -ms-overflow-style: none; /* IE/舊版 Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+        /* 就算個別瀏覽器引擎喺極少數情況（如子像素捨入誤差）仍判定內容輕微溢出，
+           都強制隱藏 WebKit 捲軸本身嘅視覺元素（唔影響 overflow:hidden 已經停用嘅捲動功能） */
+        html::-webkit-scrollbar, body::-webkit-scrollbar {
+            width: 0 !important;
+            height: 0 !important;
+            display: none !important;
         }
 
         * {
