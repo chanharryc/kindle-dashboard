@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kindle 資訊面板</title>
     <style>
-        /* ===== Web 1.0 究極相容性 CSS (捨棄 vw/vh) ===== */
+        /* ===== Web 1.0 究極相容性 CSS ===== */
         html, body {
             width: 100%;
             height: 100%;
@@ -31,7 +31,7 @@
             position: relative;
         }
 
-        /* ===== 區塊絕對定位切割 (加粗邊框 4px) ===== */
+        /* ===== 區塊絕對定位切割 ===== */
         .row-top {
             position: absolute;
             top: 0;
@@ -102,7 +102,7 @@
         .f-day-4 { left: 75%; border-right: none; }
 
 
-        /* ===== 內部置中對齊黑魔法 (兼容舊版 WebKit) ===== */
+        /* ===== 內部置中對齊 ===== */
         .center-vertical {
             position: absolute;
             top: 50%;
@@ -113,7 +113,6 @@
             text-align: center;
         }
 
-        /* ===== 巴士區塊三段式對齊 (保證左右高度完全一致) ===== */
         .bus-top {
             position: absolute;
             top: 15px;
@@ -123,7 +122,7 @@
         }
         .bus-mid {
             position: absolute;
-            top: 55%; /* 稍為偏下，留空間給標題 */
+            top: 55%; 
             left: 0;
             width: 100%;
             -webkit-transform: translateY(-50%);
@@ -139,35 +138,35 @@
         }
 
 
-        /* ===== 內部文字排版 ===== */
+        /* ===== 內部文字排版 (已放大字體及 SVG 圖示) ===== */
         .time-main { font-size: 4.8rem; font-weight: bold; line-height: 1; margin-bottom: 8px; }
         .date-main { font-size: 1.3rem; font-weight: bold; }
         
-        .w-icon { width: 75px; height: 75px; -webkit-filter: grayscale(100%); filter: grayscale(100%); margin-bottom: 5px; }
-        .w-temp { font-size: 3rem; font-weight: bold; line-height: 1; }
+        /* 棄用圖片，改用 SVG，設定尺寸及間距 */
+        .w-icon { width: 90px; height: 90px; display: inline-block; margin-bottom: 10px; }
+        .w-temp { font-size: 3.5rem; font-weight: bold; line-height: 1; display: block;}
         
         .bus-title { font-size: 1.6rem; font-weight: bold; border-bottom: 2px solid #000000; padding-bottom: 4px; margin: 0 15px 5px 15px;}
         .bus-route { font-size: 1.1rem; font-weight: bold; }
         .bus-tag { display: inline-block; font-size: 0.9rem; border: 1px solid #000000; border-radius: 10px; padding: 2px 8px; margin-top: 5px;}
         
-        /* ETA 數字稍微縮小一點點，防止過百分鐘時太迫 */
         .eta-main { font-size: 3rem; font-weight: bold; line-height: 1.1; margin-bottom: 5px; }
         .eta-sub { font-size: 1.1rem; font-weight: bold; line-height: 1.3; }
         .eta-sub-small { font-size: 0.95rem; }
         .eta-update { font-size: 0.85rem; color: #333; }
 
-        .f-date { font-size: 1.1rem; font-weight: bold; line-height: 1.2; }
-        .f-week { font-size: 1rem; font-weight: bold; line-height: 1.2; }
-        .f-icon { width: 50px; height: 50px; -webkit-filter: grayscale(100%); filter: grayscale(100%); margin: 5px 0; }
-        .f-temp { font-size: 1.1rem; font-weight: bold; }
-        .f-rh { font-size: 0.95rem; font-weight: bold; margin-top: 2px; }
+        /* 四日預報加大字體 */
+        .f-date { font-size: 1.3rem; font-weight: bold; line-height: 1.2; }
+        .f-week { font-size: 1.15rem; font-weight: bold; line-height: 1.2; }
+        .f-icon { width: 65px; height: 65px; display: inline-block; margin: 10px 0; }
+        .f-temp { font-size: 1.4rem; font-weight: bold; }
+        .f-rh { font-size: 1.1rem; font-weight: bold; margin-top: 3px; }
 
     </style>
 </head>
 <body>
 
 <div class="dashboard">
-    <!-- 上方：時間與天氣 -->
     <div class="row-top">
         <div class="box-time">
             <div class="center-vertical">
@@ -182,9 +181,7 @@
         </div>
     </div>
 
-    <!-- 中間：巴士 (強制三段式對齊) -->
     <div class="row-mid">
-        <!-- 九巴 -->
         <div class="box-bus-kmb">
             <div class="bus-top">
                 <div class="bus-title">九巴 234B</div>
@@ -198,7 +195,6 @@
             </div>
         </div>
         
-        <!-- 村巴 -->
         <div class="box-bus-shuttle">
             <div class="bus-top">
                 <div class="bus-title">恆麗園村巴</div>
@@ -214,9 +210,8 @@
         </div>
     </div>
 
-    <!-- 下方：天氣預報 -->
     <div class="row-bottom" id="forecast-container">
-        <!-- JS 將自動填入 .f-day 區塊 -->
+        <!-- JS 將自動填入預報區塊 -->
     </div>
 </div>
 
@@ -309,11 +304,9 @@
         return new Date(currentNetTimeMs);
     }
 
-    // ===== 顯示時鐘 =====
     function renderClock() {
         if(currentNetTimeMs === 0) return;
         var hkDate = getAccurateHKDate();
-
         var h = pad(hkDate.getUTCHours());
         var m = pad(hkDate.getUTCMinutes());
         var mon = hkDate.getUTCMonth() + 1;
@@ -325,7 +318,6 @@
         document.getElementById('local-date').innerText = mon + '/' + day + ' (' + week + ')' + (isPublicHoliday ? ' 紅日' : '');
     }
 
-    // ===== 政府假期 API =====
     function checkPublicHoliday() {
         var hkDate = getAccurateHKDate();
         var y = hkDate.getUTCFullYear();
@@ -343,11 +335,7 @@
                         var dt = (Object.prototype.toString.call(e.dtstart) === '[object Array]') ?
                                  (typeof e.dtstart[0] === 'string' ? e.dtstart[0] : e.dtstart[0].value) :
                                  e.dtstart;
-                        
-                        if (dt === todayStr) {
-                            isHoliday = true;
-                            break;
-                        }
+                        if (dt === todayStr) { isHoliday = true; break; }
                     }
                 }
                 isPublicHoliday = isHoliday;
@@ -357,7 +345,6 @@
         });
     }
 
-    // ===== 更新村巴 =====
     function parseTimeToMins(timeStr) {
         var parts = timeStr.split(':');
         return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
@@ -382,7 +369,6 @@
             scheduleName = "平日班次";
         }
 
-        // 填入標籤 (上方)
         document.getElementById('shuttle-tag-container').innerHTML = '<span class="bus-tag">' + scheduleName + '</span>';
 
         var upcoming = [];
@@ -397,8 +383,6 @@
         if (upcoming.length > 0) {
             var nextBus = upcoming[0];
             var diffMins = parseTimeToMins(nextBus) - currentMins;
-            
-            // 填入內容 (中間)
             var html = '<div class="eta-main">' + (diffMins === 0 ? '即將開出' : diffMins + ' 分鐘') + '</div>';
             html += '<div class="eta-sub">本班: ' + nextBus + '</div>';
             
@@ -411,12 +395,9 @@
         } else {
             document.getElementById('shuttle-mid').innerHTML = '<div class="eta-main" style="margin-top: 20px;">今日已完結</div>';
         }
-        
-        // 填入更新時間 (底部)
         document.getElementById('shuttle-bot').innerHTML = '<div class="eta-update">更新: ' + updateTimeStr + '</div>';
     }
 
-    // ===== 更新 234B =====
     function updateKMB() {
         var route = '234B';
         var stopId = '277DEAAFCFFCD64C'; 
@@ -427,7 +408,7 @@
             var updateTimeStr = pad(hkDate.getUTCHours()) + ':' + pad(hkDate.getUTCMinutes());
 
             if (err || !etaData || !etaData.data) {
-                document.getElementById('kmb-mid').innerHTML = '<div class="eta-main">API 載入失敗</div>';
+                document.getElementById('kmb-mid').innerHTML = '<div class="eta-main">載入失敗</div>';
                 document.getElementById('kmb-bot').innerHTML = '<div class="eta-update">更新: ' + updateTimeStr + '</div>';
                 return;
             }
@@ -441,14 +422,12 @@
                         var tPart = etaStringStr.split('T')[1].substring(0,5); 
                         var etaMins = parseTimeToMins(tPart);
                         var nowMins = hkDate.getUTCHours() * 60 + hkDate.getUTCMinutes();
-                        
                         var diff = etaMins - nowMins;
                         if(diff < -500) diff += 1440; 
                         if(diff >= 0) etas.push(diff);
                     }
                 }
             }
-            
             etas.sort(function(a, b){ return a - b; });
             
             if (etas.length > 0) {
@@ -462,12 +441,29 @@
             } else {
                 document.getElementById('kmb-mid').innerHTML = '<div class="eta-main" style="margin-top: 20px;">暫無班次</div>';
             }
-            
             document.getElementById('kmb-bot').innerHTML = '<div class="eta-update">更新: ' + updateTimeStr + '</div>';
         });
     }
 
-    // ===== 更新天氣 =====
+    // ===== 全新 E-ink 專用高對比 SVG 圖示生成器 =====
+    function getSvgIcon(iconNumberStr) {
+        var n = parseInt(iconNumberStr, 10);
+        // 天晴 (50, 51)
+        if (n === 50 || n === 51) {
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>';
+        }
+        // 下雨 (53, 54, 62, 63, 64, 80-85)
+        if ((n >= 53 && n <= 54) || (n >= 62 && n <= 64) || (n >= 80 && n <= 85)) {
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 13v8"></path><path d="M8 13v8"></path><path d="M12 15v8"></path><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path></svg>';
+        }
+        // 雷暴 (65, 70-76)
+        if (n === 65 || (n >= 70 && n <= 76)) {
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"></path><polyline points="13 11 9 17 15 17 11 23"></polyline></svg>';
+        }
+        // 預設: 多雲/陰天 (52, 60, 61, 其他)
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>';
+    }
+
     function updateWeather() {
         fetchJSON('https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=tc', function(err, curData) {
             if(!err && curData) {
@@ -475,9 +471,10 @@
                 if(curData.temperature && curData.temperature.data) {
                     temp = curData.temperature.data[1] ? curData.temperature.data[1].value : curData.temperature.data[0].value;
                 }
-                var icon = curData.icon ? curData.icon[0] : '50';
+                var iconNum = curData.icon ? curData.icon[0] : '60';
                 
-                var html = '<img src="https://www.hko.gov.hk/images/wxicon/pic' + icon + '.png" class="w-icon"><br>';
+                // 改用 SVG 繪製
+                var html = '<div class="w-icon">' + getSvgIcon(iconNum) + '</div><br>';
                 html += '<span class="w-temp">' + temp + '°C</span>';
                 document.getElementById('current-weather').innerHTML = html;
             }
@@ -495,7 +492,10 @@
                     html += '<div class="center-vertical">';
                     html += '<div class="f-date">' + dateStr + '</div>';
                     html += '<div class="f-week">(' + day.week + ')</div>';
-                    html += '<img src="https://www.hko.gov.hk/images/wxicon/pic' + day.ForecastIcon + '.png" class="f-icon">';
+                    
+                    // 底部預報同樣改用 SVG 繪製
+                    html += '<div class="f-icon">' + getSvgIcon(day.ForecastIcon) + '</div>';
+                    
                     html += '<div class="f-temp">' + day.forecastMintemp.value + '°- ' + day.forecastMaxtemp.value + '°</div>';
                     html += '<div class="f-rh">' + day.forecastMinrh.value + '%-' + day.forecastMaxrh.value + '%</div>';
                     html += '</div></div>';
@@ -505,22 +505,11 @@
         });
     }
 
-    // ===== 系統啟動 =====
     window.onload = function() {
         syncNetworkTime();
-        
-        setInterval(function() {
-            updateKMB();
-            updateShuttleBus();
-        }, 60000);
-        
-        setInterval(function() {
-            updateWeather();
-        }, 900000);
-        
-        setInterval(function() {
-            syncNetworkTime();
-        }, 3600000);
+        setInterval(function() { updateKMB(); updateShuttleBus(); }, 60000);
+        setInterval(function() { updateWeather(); }, 900000);
+        setInterval(function() { syncNetworkTime(); }, 3600000);
     };
 
 </script>
