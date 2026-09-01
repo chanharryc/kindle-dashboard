@@ -234,6 +234,10 @@
     function line(x1, y1, x2, y2) {
         return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '"></line>';
     }
+    // 驟雨專用虛線（同持續性降雨嘅實線區分開），點與點之間留大空間
+    function dashLine(x1, y1, x2, y2) {
+        return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke-dasharray="1.2,3.6"></line>';
+    }
 
     var ICON_SVG = {
         'sun-day': '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>',
@@ -260,12 +264,15 @@
         'rain-heavy': RAIN_CLOUD_EL + line(16, 13, 16, 21) + line(8, 13, 8, 21) + line(12, 15, 12, 23),
 
         // 驟雨3級：x 位置、高低錯落（立體感）完全跟返「降雨‧持續性」嗰3級
-        // 一樣嘅擺位，只係加返同一個斜率令全部線打斜之餘仍然互相平行
-        'showers-light': RAIN_CLOUD_EL + line(14, 15, 12.67, 19) + line(10, 17, 9.33, 19),
+        // 一樣嘅擺位，加返同一個斜率令全部線打斜之餘仍然互相平行；
+        // 用虛線（而唔係實線）同持續性降雨區分開，方便一眼分辨兩類。
+        // showers-heavy 中間嗰條線係沿住線本身嘅斜向位移嚟做高低錯落
+        // （唔係淨係垂直移），先可以保持3條線之間嘅垂直間距完全相等。
+        'showers-light': RAIN_CLOUD_EL + dashLine(14, 15, 12.67, 19) + dashLine(10, 17, 9.33, 19),
 
-        'showers-mod': RAIN_CLOUD_EL + line(14, 14, 12, 20) + line(10, 15, 8.33, 20),
+        'showers-mod': RAIN_CLOUD_EL + dashLine(14, 14, 12, 20) + dashLine(10, 15, 8.33, 20),
 
-        'showers-heavy': RAIN_CLOUD_EL + line(16, 13, 13.33, 21) + line(8, 13, 5.33, 21) + line(12, 15, 9.33, 23),
+        'showers-heavy': RAIN_CLOUD_EL + dashLine(16, 13, 13.33, 21) + dashLine(8, 13, 5.33, 21) + dashLine(11.33, 15, 8.66, 23),
 
         'thunder': RAIN_CLOUD_EL + '<polyline points="13 11 9 17 15 17 11 23"></polyline>',
 
