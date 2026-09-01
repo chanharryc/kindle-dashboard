@@ -216,42 +216,29 @@
         xhr.send();
     }
 
-    /* ===== 天氣圖示：參考用戶提供嘅圖示集款式（simple line weather icon set）=====
-       設計原則：
-       - 統一幼線條、圓角，線條粗幼一致
-       - 雲形狀改用更簡單、渾圓嘅單一雲朵輪廓（少咗多層雲霧感，貼近參考圖）
-       - 雲本身填色白色（同背景一樣），畫喺被遮擋元素之後，做到「太陽/月亮
-         喺雲後面」嘅層次感
-       - 雨改用短線段（dash）畫喺雲下面，唔再用實心水滴——參考圖入面雨/雪
-         都係用線條短劃表達，同成套圖示嘅線條風格更加統一；雪就用細小
-         「米」字雪花符號，都係參考圖入面嘅表達方式
-       - 按「狀態分類」對應，HKO 代碼同 WMO 代碼（Open-Meteo 逐小時預報用）
-         分別對應返同一套分類，圖示唔使畫兩次 */
-    var CLOUD = 'M6 19a4 4 0 1 1 .6-7.96A5.4 5.4 0 0 1 17 9.4a4 4 0 0 1 .3 7.6A4 4 0 0 1 17 19H6Z';
+    /* ===== 天氣圖示：還原返用戶舊版 dashboard 嗰種簡約粗線畫風 =====
+       （分類判斷邏輯本身唔變——日/夜區分、降雨/驟雨3級等全部保留，
+       只係將個別圖示嘅實際線條畫法還原做舊版嗰種簡單粗身風格：
+       stroke-width 2.5、太陽8條光芒、雲用返 Feather 風格嘅雲朵，
+       雨用直/斜線表達，雷暴用 polyline 閃電） */
+    var CLOUD = 'M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z';
     var CLOUD_EL = '<path d="' + CLOUD + '" fill="#ffffff"></path>';
+    // 舊版落雨/雷暴用嘅係另一個較「開口」嘅雲形狀，同上面嗰個唔同
+    var RAIN_CLOUD = 'M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25';
+    var RAIN_CLOUD_EL = '<path d="' + RAIN_CLOUD + '" fill="#ffffff"></path>';
 
-    function dash(x1, y1, x2, y2) {
+    function line(x1, y1, x2, y2) {
         return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '"></line>';
-    }
-    function tiltDash(cx, y1, y2, lean) {
-        return dash(cx - lean, y1, cx + lean, y2);
-    }
-    function flake(cx, cy, s) {
-        var k = (s * 0.87).toFixed(2);
-        var h = (s * 0.5).toFixed(2);
-        return dash(cx, cy - s, cx, cy + s) +
-            dash(cx - k, cy - h, cx + k, cy + h) +
-            dash(cx + k, cy - h, cx - k, cy + h);
     }
 
     var ICON_SVG = {
-        'sun-day': '<circle cx="12" cy="12" r="4.3"></circle><line x1="12" y1="1.8" x2="12" y2="3.6"></line><line x1="12" y1="20.4" x2="12" y2="22.2"></line><line x1="4.75" y1="4.75" x2="6.05" y2="6.05"></line><line x1="17.95" y1="17.95" x2="19.25" y2="19.25"></line><line x1="1.8" y1="12" x2="3.6" y2="12"></line><line x1="20.4" y1="12" x2="22.2" y2="12"></line><line x1="4.75" y1="19.25" x2="6.05" y2="17.95"></line><line x1="17.95" y1="6.05" x2="19.25" y2="4.75"></line>',
+        'sun-day': '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>',
 
-        'moon-night': '<path d="M20.5 13.4A8.5 8.5 0 1 1 10.6 3.5 6.8 6.8 0 0 0 20.5 13.4Z"></path>',
+        'moon-night': '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path>',
 
-        'partly-day': '<circle cx="8" cy="8" r="3.3"></circle><line x1="8" y1="1.15" x2="8" y2="2.9"></line><line x1="2.15" y1="5.95" x2="3.55" y2="6.95"></line><line x1="13.85" y1="3.7" x2="12.45" y2="4.85"></line>' + CLOUD_EL,
+        'partly-day': '<circle cx="8" cy="8" r="3.4"></circle><line x1="8" y1="1.5" x2="8" y2="3.2"></line><line x1="2.5" y1="5.5" x2="3.9" y2="6.5"></line><line x1="13.5" y1="3.5" x2="12.1" y2="4.5"></line>' + CLOUD_EL,
 
-        'partly-night': '<path d="M11.78 6.33A3.78 3.78 0 1 1 7.67 2.22 2.94 2.94 0 0 0 11.78 6.33Z"></path>' + CLOUD_EL,
+        'partly-night': '<path d="M11.5 6A3.6 3.6 0 1 1 7.6 2.1 2.8 2.8 0 0 0 11.5 6Z"></path>' + CLOUD_EL,
 
         'cloudy': CLOUD_EL,
 
@@ -259,35 +246,35 @@
 
         'fog': '<path d="M3 8c2 -1.6 4 1.6 6 0s4 -1.6 6 0s4 1.6 6 0"></path><path d="M3 13c2 -1.6 4 1.6 6 0s4 -1.6 6 0s4 1.6 6 0"></path><path d="M3 18c2 -1.6 4 1.6 6 0s4 -1.6 6 0s4 1.6 6 0"></path>',
 
-        // 降雨分 3 級：短線數量 + 長度雙重編碼，微雨/雨/大雨一眼分辨
-        'rain-light': CLOUD_EL + dash(9, 20, 9, 22) + dash(15, 20, 15, 22),
+        // 降雨分 3 級：直線數量 + 長度雙重編碼，同舊版一致嘅表達方式
+        'rain-light': RAIN_CLOUD_EL + line(14, 15, 14, 19) + line(10, 17, 10, 19),
 
-        'rain-mod': CLOUD_EL + dash(7, 20, 7, 22.5) + dash(12, 20, 12, 22.5) + dash(17, 20, 17, 22.5),
+        'rain-mod': RAIN_CLOUD_EL + line(14, 14, 14, 20) + line(10, 15, 10, 20),
 
-        'rain-heavy': CLOUD_EL + dash(6, 20, 6, 23) + dash(10.3, 20, 10.3, 23) + dash(14.6, 20, 14.6, 23) + dash(18.5, 20, 18.5, 23),
+        'rain-heavy': RAIN_CLOUD_EL + line(16, 13, 16, 21) + line(8, 13, 8, 21) + line(12, 15, 12, 23),
 
-        // 驟雨同樣分輕/中/重 3 級，用斜向短線表達陣性/急降嘅雨，同持續降雨區分
-        'showers-light': CLOUD_EL + tiltDash(9, 20, 22, 1) + tiltDash(15, 20, 22, 1),
+        // 驟雨同樣3級，用斜線表達陣性/急降嘅雨，同持續降雨區分
+        'showers-light': RAIN_CLOUD_EL + line(15, 15, 13, 19) + line(11, 17, 9.5, 19),
 
-        'showers-mod': CLOUD_EL + tiltDash(7, 20, 22.5, 1.2) + tiltDash(12, 20, 22.5, 1.2) + tiltDash(17, 20, 22.5, 1.2),
+        'showers-mod': RAIN_CLOUD_EL + line(15, 14, 12.5, 20) + line(11, 15, 9, 20),
 
-        'showers-heavy': CLOUD_EL + tiltDash(6, 20, 23, 1.4) + tiltDash(10.3, 20, 23, 1.4) + tiltDash(14.6, 20, 23, 1.4) + tiltDash(18.5, 20, 23, 1.4),
+        'showers-heavy': RAIN_CLOUD_EL + line(17, 13, 14.5, 21) + line(9, 13, 6.5, 21) + line(13, 15, 10.5, 23),
 
-        'thunder': CLOUD_EL + '<polygon points="14,15 9,20.5 12,20.5 10.5,24 16,17.5 12.8,17.5" fill="#000000" stroke="none"></polygon>',
+        'thunder': RAIN_CLOUD_EL + '<polyline points="13 11 9 17 15 17 11 23"></polyline>',
 
-        'snow': CLOUD_EL + flake(9, 21, 1.3) + flake(13, 22, 1.3) + flake(17, 21, 1.3),
+        'snow': RAIN_CLOUD_EL + line(11.5, 16, 14, 19) + line(14, 16, 11.5, 19) + line(7.5, 17, 10, 20) + line(10, 17, 7.5, 20),
 
         'windy': '<path d="M2 8h13.5a2.5 2.5 0 1 0 -2.4 -3.2"></path><path d="M2 12.5h17a2.8 2.8 0 1 1 -2.7 3.6"></path><path d="M2 17h11a2 2 0 1 1 -1.9 2.6"></path>',
 
         'hot': '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z" fill="#000000" stroke="none"></path>',
 
-        'cold': '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path>' + dash(19, 3.5, 19, 7.5) + dash(17, 5.5, 21, 5.5),
+        'cold': '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path>',
 
         'cyclone': '<path d="M12 2.2a9.8 9.8 0 1 0 9.8 9.8"></path><path d="M12 6a6 6 0 1 0 6 6"></path><path d="M12 9.8a2.2 2.2 0 1 0 2.2 2.2"></path>'
     };
 
     function renderIconCategory(category) {
-        var S = '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">';
+        var S = '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">';
         var E = '</svg>';
         return S + (ICON_SVG[category] || ICON_SVG['cloudy']) + E;
     }
