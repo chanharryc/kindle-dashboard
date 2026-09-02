@@ -480,18 +480,22 @@
         document.getElementById('shuttle-bot').innerHTML = '<div class="eta-update">更新: ' + updateTimeStr + '</div>';
     }
 
-    // 站 ID B069D9C12F89AAFA = 油柑頭 (YAU KOM TAU, TW360)，234B 往荃灣方向
+    // 站 ID B069D9C12F89AAFA = 油柑頭 (YAU KOM TAU, TW360)，234B 往荃灣方向。
+    // 主要 URL 而家係 Cloudflare Worker 嘅同源 API（/api/kmb-eta），Worker
+    // 每次收到請求即刻去問返 KMB 攞即時資料，冇晒之前 GitHub Actions cron
+    // 唔準時嘅問題；KMB_DIRECT_URL 留返做 Worker 都攞唔到嗰陣嘅後備。
     var KMB_DIRECT_URL = 'https://data.etabus.gov.hk/v1/transport/kmb/eta/B069D9C12F89AAFA/234B/1';
-    var KMB_CACHE_URL = 'kmb_eta.json';
+    var KMB_CACHE_URL = '/api/kmb-eta';
 
-    /* 解析 KMB ETA 原始資料，回傳由近到遠嘅分鐘數陣列（outbound 方向）。
+    /* 解析 KMB ETA 原始資料，回傳由近到遠嘅分鐘數陣列（inbound 方向，
+       即油柑頭 → 荃灣西站，同版面「往 荃灣」嘅描述一致）。
        手動拆解 ISO 字串，避開 Kindle 舊版瀏覽器對 Date 解析格式嘅死機 Bug。 */
     function parseKmbEtaMinutes(etaData, hkDate) {
         var etas = [];
         var nowMins = hkDate.getUTCHours() * 60 + hkDate.getUTCMinutes();
         for(var i=0; i<etaData.data.length; i++) {
             var d = etaData.data[i];
-            if (d.dir === 'O' && d.eta !== null) {
+            if (d.dir === 'I' && d.eta !== null) {
                 var etaStringStr = String(d.eta);
                 if(etaStringStr.indexOf('T') !== -1) {
                     var tPart = etaStringStr.split('T')[1].substring(0,5);
@@ -521,10 +525,11 @@
     }
 
     /* KMB 直接 call 個 API 喺 Kindle 舊版瀏覽器度經常失敗（相同代碼 call HKO 天氣 API 就正常，
-       估計係 CORS 或該 API 對舊版瀏覽器唔穩定）。改為由 GitHub Actions 定時喺伺服器端讀取
-       KMB ETA，寫成 kmb_eta.json 存喺同一個 repo／同一個 domain 度，Kindle 只需要讀返
-       同源嘅靜態 JSON（同載入呢頁 HTML 完全一樣嘅連線方式，穩陣好多）。
-       如果自家快取一時讀唔到（例如 Actions 未跑過／部署緊），先 fallback 試下直接 call KMB。 */
+       估計係 CORS 或該 API 對舊版瀏覽器唔穩定）。改為由 Cloudflare Worker 喺伺服器端讀取
+       KMB ETA（/api/kmb-eta），Kindle 只需要讀返同源嘅 API（同載入呢頁 HTML 完全一樣嘅
+       連線方式，穩陣好多），Worker 每次收到請求即刻去問返 KMB，唔使等任何排程，
+       每分鐘 poll 一次就即刻每分鐘攞到新資料。如果 Worker 一時讀唔到，先 fallback
+       試下直接 call KMB。 */
     function updateKMB(isRetry) {
         var hkDate = getAccurateHKDate();
         var updateTimeStr = pad(hkDate.getUTCHours()) + ':' + pad(hkDate.getUTCMinutes());
@@ -591,8 +596,8 @@
 
     function hkDateKey(y, m, d, h) { return y * 1000000 + m * 10000 + d * 100 + h; }
 
-    /* 用 GitHub Actions 每 30 分鐘由 Open-Meteo 攞返嚟嘅真正逐小時預報（見
-       hourly_forecast.json），揀出「而家之後」嘅 6 個鐘頭渲染。時間字串
+    /* 用 Cloudflare Worker（/api/hourly-forecast）即時由 Open-Meteo 攞返嚟嘅
+       真正逐小時預報，揀出「而家之後」嘅 6 個鐘頭渲染。時間字串
        "YYYY-MM-DDTHH:MM" 係香港本地時間（Open-Meteo 已經用 timezone=Asia/Hong_Kong
        輸出，唔係 UTC），手動拆解字串讀年月日時，避開 Date 解析格式喺 Kindle
        舊版瀏覽器嘅風險。回傳 true 代表成功渲染，false 代表冇合用嘅資料。 */
@@ -627,7 +632,8 @@
         return true;
     }
 
-    var HOURLY_CACHE_URL = 'hourly_forecast.json';
+    // 同上，Worker 每次即時去問 Open-Meteo 攞逐小時預報
+    var HOURLY_CACHE_URL = '/api/hourly-forecast';
 
     function updateHourlyForecast(isRetry) {
         var hkDate = getAccurateHKDate();
