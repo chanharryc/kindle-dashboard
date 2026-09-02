@@ -291,10 +291,18 @@
         'cyclone': '<path d="M12 2.2a9.8 9.8 0 1 0 9.8 9.8"></path><path d="M12 6a6 6 0 1 0 6 6"></path><path d="M12 9.8a2.2 2.2 0 1 0 2.2 2.2"></path>'
     };
 
+    /* 逐個核實過晒 19 款圖示：連筆畫嘅圓角邊位計落去，好多款（太陽、
+       局部多雲、成組落雨/驟雨/雷暴/降雪）其實個實際墨跡已經頂到甚至
+       畫出 0-24 嘅 viewBox 邊界，畫面上會見到個邊被裁走一截。而家統一
+       喺呈現層加一個以圖示中心 (12,12) 為基準嘅 0.92 倍縮放，令所有
+       圖示一致咁縮細返少少（肉眼幾乎見唔到細咗），令邊位留返至少
+       0.4 嘅安全空間，唔會再撞到／裁到邊界；毋須逐個圖示個別調較
+       座標，亦唔會影響返返 19 款之間嘅相對大細比例 */
     function renderIconCategory(category) {
         var S = '<svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">';
         var E = '</svg>';
-        return S + (ICON_SVG[category] || ICON_SVG['cloudy']) + E;
+        var G = '<g transform="translate(12,12) scale(0.92) translate(-12,-12)">';
+        return S + G + (ICON_SVG[category] || ICON_SVG['cloudy']) + '</g>' + E;
     }
 
     /* HKO 天氣圖示代碼 → 分類（日/夜分開處理，避免夜間「天晴」誤顯示做雷暴等錯配問題） */
