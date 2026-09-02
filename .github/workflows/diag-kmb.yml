@@ -34,3 +34,12 @@ jobs:
           echo
           curl -s --max-time 15 'https://data.etabus.gov.hk/v1/transport/kmb/route/234B/inbound/1'
           echo
+
+      - name: Stop names for all 234B inbound stops (looking for 油柑頭)
+        run: |
+          for sid in 0C4F5FC61E73367C 4A68B87D533BA937 F4FF1AAF9A7EB07A 8AFF8B43EC3E547F 83C4F756489484B5 ED9E5ACF98190E5C D7D5410F2F97D682 DA87D4887F5FAF62 81F1ECC7278CDC18 2D36E1CF8C4FF699 8316A5C8798768AF 96D0ED04D761DBE4 B069D9C12F89AAFA E5763322877BB340 48769F0B9F6E6C1B 93F4EA3D82B33BEF 3DD784D9B2C30AFC 9E970734315233A2 40A0B70767CA3F13 4BDF62F2A7C32429 92A8281D80524F78 716D84D1B7EA256E; do
+            echo "-- $sid --"
+            curl -s --max-time 15 "https://data.etabus.gov.hk/v1/transport/kmb/stop/$sid"
+            echo
+            sleep 0.2
+          done
