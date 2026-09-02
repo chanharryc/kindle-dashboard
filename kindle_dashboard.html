@@ -472,7 +472,8 @@
         document.getElementById('shuttle-bot').innerHTML = '<div class="eta-update">更新: ' + updateTimeStr + '</div>';
     }
 
-    var KMB_DIRECT_URL = 'https://data.etabus.gov.hk/v1/transport/kmb/eta/277DEAAFCFFCD64C/234B/1';
+    // 站 ID B069D9C12F89AAFA = 油柑頭 (YAU KOM TAU, TW360)，234B 往荃灣方向
+    var KMB_DIRECT_URL = 'https://data.etabus.gov.hk/v1/transport/kmb/eta/B069D9C12F89AAFA/234B/1';
     var KMB_CACHE_URL = 'kmb_eta.json';
 
     /* 解析 KMB ETA 原始資料，回傳由近到遠嘅分鐘數陣列（outbound 方向）。

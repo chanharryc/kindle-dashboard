@@ -22,8 +22,12 @@ jobs:
       - name: Fetch KMB 234B ETA (server-side, avoids Kindle browser CORS/TLS limitations)
         run: |
           set -e
+          # 站 ID B069D9C12F89AAFA = 油柑頭 (YAU KOM TAU, TW360)，234B 入油
+          # 柑頭方向（bound=I，往荃灣）第13站。之前用嘅 277DEAAFCFFCD64C
+          # 喺 KMB 系統根本唔存在（/stop/ 查詢返 "data":{}），令 ETA
+          # 長期得空陣列，儀表板一直顯示「暫無班次」
           curl -sf --max-time 15 \
-            'https://data.etabus.gov.hk/v1/transport/kmb/eta/277DEAAFCFFCD64C/234B/1' \
+            'https://data.etabus.gov.hk/v1/transport/kmb/eta/B069D9C12F89AAFA/234B/1' \
             -o kmb_eta.json.tmp
           python3 -c "import json; json.load(open('kmb_eta.json.tmp'))"
           mv kmb_eta.json.tmp kmb_eta.json
