@@ -1,0 +1,36 @@
+name: Diagnose KMB 234B ETA (temporary)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Stop info for configured stop id
+        run: |
+          echo "=== stop info: 277DEAAFCFFCD64C ==="
+          curl -s --max-time 15 'https://data.etabus.gov.hk/v1/transport/kmb/stop/277DEAAFCFFCD64C'
+          echo
+      - name: Route-stop list for 234B outbound service_type 1
+        run: |
+          echo "=== route-stop 234B outbound 1 ==="
+          curl -s --max-time 15 'https://data.etabus.gov.hk/v1/transport/kmb/route-stop/234B/outbound/1'
+          echo
+      - name: Route-stop list for 234B inbound service_type 1
+        run: |
+          echo "=== route-stop 234B inbound 1 ==="
+          curl -s --max-time 15 'https://data.etabus.gov.hk/v1/transport/kmb/route-stop/234B/inbound/1'
+          echo
+      - name: Raw ETA response for configured stop/route/service_type
+        run: |
+          echo "=== eta 277DEAAFCFFCD64C / 234B / 1 ==="
+          curl -s --max-time 15 'https://data.etabus.gov.hk/v1/transport/kmb/eta/277DEAAFCFFCD64C/234B/1'
+          echo
+      - name: Route info for 234B
+        run: |
+          echo "=== route 234B ==="
+          curl -s --max-time 15 'https://data.etabus.gov.hk/v1/transport/kmb/route/234B/outbound/1'
+          echo
+          curl -s --max-time 15 'https://data.etabus.gov.hk/v1/transport/kmb/route/234B/inbound/1'
+          echo
